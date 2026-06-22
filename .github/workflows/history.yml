@@ -2,9 +2,9 @@ name: Update Risk Data
 
 on:
   schedule:
-    # S'exécute tous les jours à 18h05 (Heure de Paris / 16h05 UTC)
-    - cron: '2 17 * * *'
-  workflow_dispatch: # Permet de lancer le script manuellement depuis l'onglet Actions
+    # S'exécute toutes les heures de 17h02 à 23h02 pour retenter si nécessaire
+    - cron: '2 17-23 * * *'
+  workflow_dispatch:
 
 jobs:
   update-data:
@@ -29,7 +29,7 @@ jobs:
 
           async function run() {
               const d = new Date();
-              d.setDate(d.getDate() + 1); // Cible le fichier de demain
+              d.setDate(d.getDate() + 1);
               const options = { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' };
               const parts = new Intl.DateTimeFormat('fr-FR', options).formatToParts(d);
               const year = parts.find(p => p.type === 'year').value;
@@ -38,51 +38,66 @@ jobs:
               const dateKey = \`\${year}-\${month}-\${day}\`;
               const dateStr = \`\${year}\${month}\${day}\`;
 
+              const historyPath = './historique.json';
+              let history = [];
+              if (fs.existsSync(historyPath)) {
+                  history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+              }
+
+              // CONDITION DE SUCCÈS PRÉCÉDENT : Si on a déjà les données complètes (pas de 'unknown'), on stoppe proprement
+              const existant = history.find(item => item.date === dateKey);
+              if (existant && existant.calanques !== 'unknown' && existant.sainteBaume13 !== 'unknown' && existant.sainteBaume83 !== 'unknown' && existant.garrigues !== 'unknown') {
+                  console.log('✅ Données déjà complètes pour le ' + dateKey + '. Pas besoin de relancer.');
+                  process.exit(0);
+              }
+
               try {
-                  // 1. Récupération des Bouches-du-Rhône (13)
-                  const res13 = await axios.get(\`https://www.risque-prevention-incendie.fr/static/13/import_data/\${dateStr}.json\`);
-                  const data13 = res13.data;
+                  let data13 = null, data83 = null, data34 = null;
+
+                  // 1. Récupération sécurisée Bouches-du-Rhône (13)
+                  try {
+                      const res13 = await axios.get(\`https://www.risque-prevention-incendie.fr/static/13/import_data/\${dateStr}.json\`);
+                      data13 = res13.data;
+                  } catch(e) { console.log('⚠️ Fichier des Bouches-du-Rhône (13) indisponible.'); }
                   
-                  // 2. Récupération du Var (83)
-                  let data83 = null;
+                  // 2. Récupération sécurisée Var (83)
                   try {
                       const res83 = await axios.get(\`https://www.risque-prevention-incendie.fr/static/83/import_data/\${dateStr}.json\`);
                       data83 = res83.data;
-                  } catch(e) { 
-                      console.log('⚠️ Fichier du Var (83) indisponible pour le moment.'); 
-                  }
+                  } catch(e) { console.log('⚠️ Fichier du Var (83) indisponible.'); }
 
-                  // 3. Récupération de l'Hérault (34)
-                  let data34 = null;
+                  // 3. Récupération sécurisée Hérault (34)
                   try {
                       const res34 = await axios.get(\`https://www.risque-prevention-incendie.fr/static/34/import_data/\${dateStr}.json\`);
                       data34 = res34.data;
-                  } catch(e) { 
-                      console.log('⚠️ Fichier de l\'Hérault (34) indisponible pour le moment.'); 
-                  }
+                  } catch(e) { console.log('⚠️ Fichier de l\'Hérault (34) indisponible.'); }
                   
+                  // Si TOUT est indisponible, on force l'échec pour déclencher le retry à la prochaine heure
+                  if (!data13 && !data83 && !data34) {
+                      throw new Error('Aucun fichier préfectoral n\'est encore disponible.');
+                  }
+
                   let calanques = 'unknown';
                   let sainteBaume13 = 'unknown';
                   let sainteBaume83 = 'unknown';
-                  let picStLoup = 'unknown';
+                  let garrigues = 'unknown';
 
-                  // Extraction Massifs 13
                   if (data13 && data13.massifs) {
                       calanques = (Array.isArray(data13.massifs['133']) ? data13.massifs['133'][0] : data13.massifs['133']) || 'unknown';
                       sainteBaume13 = (Array.isArray(data13.massifs['1322']) ? data13.massifs['1322'][0] : data13.massifs['1322']) || 'unknown';
                   }
-
-                  // Extraction Massifs 83
                   if (data83 && data83.massifs) {
                       sainteBaume83 = (Array.isArray(data83.massifs['832']) ? data83.massifs['832'][0] : data83.massifs['832']) || 'unknown';
                   }
-
-                  // Extraction Massifs 34
                   if (data34 && data34.massifs) {
                       garrigues = (Array.isArray(data34.massifs['344']) ? data34.massifs['344'][0] : data34.massifs['344']) || 'unknown';
                   }
 
-                  // Construction du payload pour l'historique
+                  // Si une des données clés est encore à 'unknown', on considère cela comme un échec pour provoquer la relance
+                  if (calanques === 'unknown' || sainteBaume13 === 'unknown' || sainteBaume83 === 'unknown' || garrigues === 'unknown') {
+                      throw new Error('Certains massifs sont encore manquants. Nouvelle tentative requise plus tard.');
+                  }
+
                   const payload = { 
                       date: dateKey, 
                       calanques: calanques.toString(), 
@@ -91,25 +106,15 @@ jobs:
                       garrigues: garrigues.toString()
                   };
 
-                  // Lecture et mise à jour du fichier historique.json
-                  const historyPath = './historique.json';
-                  let history = [];
-                  if (fs.existsSync(historyPath)) {
-                      history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
-                  }
-                  
-                  // Supprime l'entrée si elle existe déjà pour éviter les doublons
                   history = history.filter(item => item.date !== dateKey);
                   history.push(payload);
-                  
-                  // Tri par ordre chronologique
                   history.sort((a, b) => a.date.localeCompare(b.date));
                   
                   fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
                   console.log('✅ Historique mis à jour avec succès pour le ' + dateKey);
               } catch (error) {
-                  console.error('❌ Erreur générale de récupération :', error.message);
-                  process.exit(1);
+                  console.error('❌ Attente de publication :', error.message);
+                  process.exit(1); // Retourne un échec pour forcer GitHub Actions à marquer l'étape en rouge
               }
           }
           run();
@@ -117,6 +122,7 @@ jobs:
 
       - name: Commit and Push changes
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add historique.json
