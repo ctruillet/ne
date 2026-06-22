@@ -7,10 +7,12 @@
     --border-color: #e2e8f0;
 
     /* Thèmes de risques (Variables unifiées) */
+    --c-0-bg: #f0fdf4; --c-0-text: #cdcfce; --c-0-border: #bbf7d0; --c-0-badge: #cccccc;
     --c-1-bg: #f0fdf4; --c-1-text: #166534; --c-1-border: #bbf7d0; --c-1-badge: #15803d;
     --c-2-bg: #fefce8; --c-2-text: #854d0e; --c-2-border: #fef08a; --c-2-badge: #a16207;
     --c-3-bg: #fff7ed; --c-3-text: #9a3412; --c-3-border: #ffedd5; --c-3-badge: #c2410c;
     --c-4-bg: #fef2f2; --c-4-text: #991b1b; --c-4-border: #fee2e2; --c-4-badge: #b91c1c;
+    --c-5-bg: #fef2f2; --c-5-text: #080101; --c-5-border: #fee2e2; --c-5-badge: #080101;
     --c-unknown-bg: #f8fafc; --c-unknown-text: #475569; --c-unknown-border: #cbd5e1; --c-unknown-badge: #64748b;
 }
 
@@ -146,6 +148,10 @@ h1 {
 }
 
 /* Styles dynamiques injectés */
+.card-status-0 { background-color: var(--c-0-bg); border-color: var(--c-0-border); color: var(--c-0-text); }
+.card-status-0 .badge-tomorrow { background-color: var(--c-0-badge); }
+.text-status-0 { background-color: rgba(174, 184, 178, 0.08); color: var(--c-0-badge); }
+
 .card-status-1 { background-color: var(--c-1-bg); border-color: var(--c-1-border); color: var(--c-1-text); }
 .card-status-1 .badge-tomorrow { background-color: var(--c-1-badge); }
 .text-status-1 { background-color: rgba(22, 101, 52, 0.08); color: var(--c-1-badge); }
@@ -161,6 +167,10 @@ h1 {
 .card-status-4 { background-color: var(--c-4-bg); border-color: var(--c-4-border); color: var(--c-4-text); }
 .card-status-4 .badge-tomorrow { background-color: var(--c-4-badge); }
 .text-status-4 { background-color: rgba(185, 28, 28, 0.08); color: var(--c-4-badge); }
+
+.card-status-5 { background-color: #1e293b; border-color: #0f172a; color: #ffffff; }
+.card-status-5 .badge-tomorrow { background-color: #0f172a; border: 1px solid #334155; color: #ffffff; }
+.text-status-5 { background-color: #0f172a; color: #ffffff; border: 1px solid #334155; }
 
 .card-status-unknown .badge-tomorrow { background-color: var(--c-unknown-badge); }
 

@@ -1,0 +1,22 @@
+{
+  "13": {
+    "1": { "label": "Autorisé", "color": "1", "detail": "Accès au massif autorisé" },
+    "2": { "label": "Autorisé", "color": "1", "detail": "Accès au massif autorisé" },
+    "3": { "label": "Interdit", "color": "4", "detail": "Accès au massif interdit" },
+    "4": { "label": "Interdit", "color": "4", "detail": "Accès au massif interdit" }
+  },
+  "83": {
+    "1": { "label": "Autorisé", "color": "1", "detail": "Accès et travaux autorisés" },
+    "2": { "label": "Autorisé", "color": "2", "detail": "Accès autorisé, travaux autorisés avec dispositif de prévention et d’extinction approprié sous la responsabilité du chef de chantier" },
+    "3": { "label": "Déconseillé", "color": "3", "detail": "Accès déconseillé et travaux pouvant être à l’origine d’un départ de feu interdits, sauf travaux agricoles, sylvicoles ou présentant un caractère d’intérêt général de 5h à 13h avec dispositif d’extinction (groupe motopompe avec réserve d’eau de 400L)" },
+    "4": { "label": "Interdit", "color": "4", "detail": "Accès interdit hors ZAPEF (Zones d’accueil du public en forêt autorisées) et travaux interdits, conditions d’accès particulières sur les îles de Port-Cros et Porquerolles" },
+    "5": { "label": "Interdit", "color": "4", "detail": "Accès et travaux interdits dans tous massifs forestiers, EXTRÊME vigilance requise" }
+  },
+  "34": {
+    "1": { "label": "Autorisé", "color": "1", "detail": "Accès autorisé / Travaux autorisés" },
+    "2": { "label": "Autorisé", "color": "2", "detail": "Accès autorisé / Travaux autorisés avec dispositif de prévention et d'extinction approprié sous la responsabilité du chef de chantier" },
+    "3": { "label": "Déconseillé", "color": "3", "detail": "Accès déconseillés / Travaux autorisés de 5h à 12h sous réserve dispositif de prévention et d'extinction.Travaux avec moissonneuses batteuses autorisés de minuit à 12h sur les massifs 4 à 9, et toute la journée sur les massifs 1 à 3." },
+    "4": { "label": "Interdit", "color": "4", "detail": "Accès interdits dans les espaces forestiers / Travaux interdits dans tous les espaces forestiers et 200m autour" },
+    "5": { "label": "Interdit", "color": "5", "detail": "Accès interdits dans les espaces forestiers / Travaux interdits dans tous les espaces forestiers et 200m autour" }
+  }
+}
