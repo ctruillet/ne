@@ -1,6 +1,6 @@
 {
-  "name": "Nature Environnement Massifs",
-  "short_name": "NE Massifs",
+  "name": "Risque incendies Nature Environnement",
+  "short_name": "Risque incendies",
   "description": "Suivi des risques incendies dans les massifs",
   "start_url": "./index.html",
   "display": "standalone",
