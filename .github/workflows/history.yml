@@ -1,13 +1,13 @@
-name: Update Risk History
+name: Update Risk Data
 
 on:
   schedule:
-    # S'exécute tous les jours à 18h05 (Heure de Paris / 16h05 UTC)
+    # S'exécute tous les jours à 17h05 (Heure de Paris)
     - cron: '5 17 * * *'
-  workflow_dispatch: # Permet de le lancer à la main depuis GitHub pour tester
+  workflow_dispatch: # Permet de le lancer à la main pour tester
 
 jobs:
-  update-history:
+  update-data:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -21,16 +21,15 @@ jobs:
       - name: Install dependencies
         run: npm install axios
 
-      - name: Run history script
+      - name: Fetch and Save Data
         run: |
           node -e "
           const axios = require('axios');
           const fs = require('fs');
 
           async function run() {
-              // 1. Calcul de la date de demain
               const d = new Date();
-              d.setDate(d.getDate() + 1);
+              d.setDate(d.getDate() + 1); // Demain
               const options = { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' };
               const parts = new Intl.DateTimeFormat('fr-FR', options).formatToParts(d);
               const year = parts.find(p => p.type === 'year').value;
@@ -40,7 +39,6 @@ jobs:
               const dateStr = \`\${year}\${month}\${day}\`;
 
               try {
-                  // 2. Fetch des données de la préfecture
                   const response = await axios.get(\`https://www.risque-prevention-incendie.fr/static/13/import_data/\${dateStr}.json\`);
                   const data = response.data;
                   
@@ -52,26 +50,25 @@ jobs:
                       sainteBaume = (Array.isArray(data.massifs['1322']) ? data.massifs['1322'][0] : data.massifs['1322']) || 'unknown';
                   }
 
-                  // 3. Lecture et mise à jour du fichier historique.json
+                  const payload = { date: dateKey, calanques, sainteBaume };
+
+                  // 1. Sauvegarde du fichier temps réel pour l'appli
+                  fs.writeFileSync('./previsions.json', JSON.stringify(payload, null, 2));
+
+                  // 2. Mise à jour de l'historique cumulé
                   const historyPath = './historique.json';
                   let history = [];
                   if (fs.existsSync(historyPath)) {
                       history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
                   }
-
-                  // Évite les doublons si le script tourne deux fois
                   history = history.filter(item => item.date !== dateKey);
-
-                  // Ajout de la nouvelle entrée
-                  history.push({ date: dateKey, calanques, sainteBaume });
-
-                  // Tri par date
+                  history.push(payload);
                   history.sort((a, b) => a.date.localeCompare(b.date));
-
                   fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
-                  console.log('✅ Historique mis à jour pour le ' + dateKey);
+
+                  console.log('✅ Données mises à jour avec succès.');
               } catch (error) {
-                  console.error('❌ Impossible de récupérer les données :', error.message);
+                  console.error('❌ Erreur de récupération :', error.message);
                   process.exit(1);
               }
           }
@@ -82,6 +79,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add historique.json
-          git diff-index --quiet HEAD || git commit -m "Mise à jour automatique de l'historique"
+          git add previsions.json historique.json
+          git diff-index --quiet HEAD || git commit -m "Mise à jour automatique des risques"
           git push

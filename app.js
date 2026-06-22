@@ -69,18 +69,27 @@ function appliquerStyleToday(textId, status) {
 }
 
 async function init() {
-    const todayStr = getFormattedDate(0);
-    const tomorrowStr = getFormattedDate(1);
+    // On charge le fichier généré par notre GitHub Action sur notre propre dépôt
+    const url = './previsions.json';
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Fichier non trouvé");
+        const data = await response.json();
+        
+        // Comme le fichier contient déjà la prévision préparée par le script :
+        appliquerStyleCard('card-calanques', 'calanques-tomorrow', data.calanques, "Non disponible");
+        appliquerStyleCard('card-saintebaume', 'saintebaume-tomorrow', data.sainteBaume, "Non disponible");
+        
+        // Pour aujourd'hui (Optionnel ou en attente d'historique)
+        appliquerStyleToday('calanques-today', data.calanques); // Modifiable selon le besoin
+        appliquerStyleToday('saintebaume-today', data.sainteBaume);
 
-    // Chargement de la journée en cours
-    const todayData = await fetchZoneData(todayStr);
-    appliquerStyleToday('calanques-today', todayData.calanques);
-    appliquerStyleToday('saintebaume-today', todayData.sainteBaume);
-
-    // Chargement des prévisions de demain
-    const tomorrowData = await fetchZoneData(tomorrowStr);
-    appliquerStyleCard('card-calanques', 'calanques-tomorrow', tomorrowData.calanques, "Non disponible");
-    appliquerStyleCard('card-saintebaume', 'saintebaume-tomorrow', tomorrowData.sainteBaume, "Non disponible");
+    } catch (e) {
+        console.error("Erreur de chargement des prévisions locales :", e);
+        appliquerStyleCard('card-calanques', 'calanques-tomorrow', "unknown", "Données indisponibles");
+        appliquerStyleCard('card-saintebaume', 'saintebaume-tomorrow', "unknown", "Données indisponibles");
+    }
 }
 
 // Lancement au chargement du script
