@@ -18,8 +18,8 @@ function getFormattedDate(offset = 0) {
 }
 
 async function fetchZoneData(dateStr) {
-    // const url = `https://www.risque-prevention-incendie.fr/static/13/import_data/${dateStr}.json`;
-    const url = `${dateStr}.json`;
+    const url = `https://www.risque-prevention-incendie.fr/static/13/import_data/${dateStr}.json`;
+    
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error("404");
