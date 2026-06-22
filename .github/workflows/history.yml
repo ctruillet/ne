@@ -30,7 +30,7 @@ jobs:
           async function run() {
               // 1. Calcul de la date de demain
               const d = new Date();
-              d.setDate(d.getDate() + 0);
+              d.setDate(d.getDate() + 1);
               const options = { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' };
               const parts = new Intl.DateTimeFormat('fr-FR', options).formatToParts(d);
               const year = parts.find(p => p.type === 'year').value;
@@ -83,5 +83,5 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add historique.json
-          git diff-index --quiet HEAD || git commit -m "📈 Mise à jour automatique de l'historique"
+          git diff-index --quiet HEAD || git commit -m "Mise à jour automatique de l'historique"
           git push
