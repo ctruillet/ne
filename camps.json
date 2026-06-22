@@ -1,0 +1,24 @@
+[
+  {
+    "id": "calanques",
+    "titre": "📍 Massif des Calanques (Luminy)",
+    "zones": [
+      { "cle": "calanques", "label": "Calanques", "dept": "13" }
+    ]
+  },
+  {
+    "id": "sainte-baume",
+    "titre": "📍 Massif de la Sainte-Baume (Gémenos)",
+    "zones": [
+      { "cle": "sainteBaume13", "label": "Bouches-du-Rhône (13)", "dept": "13" },
+      { "cle": "sainteBaume83", "label": "Var (83)", "dept": "83" }
+    ]
+  },
+  {
+    "id": "garrigues",
+    "titre": "📍 Massif des Garrigues (Pic St Loup)",
+    "zones": [
+      { "cle": "garrigues", "label": "Garrigues", "dept": "34" }
+    ]
+  }
+]

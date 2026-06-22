@@ -17,42 +17,78 @@ function getIsoDate(offset = 0) {
     return `${year}-${month}-${day}`;
 }
 
-function appliquerStyleCard(cardId, textId, status, labelParDefaut) {
-    const card = document.getElementById(cardId);
-    const text = document.getElementById(textId);
-    if (!card || !text) return;
-    
-    card.className = "zone-card"; 
-    if (["1", "2", "3", "4"].includes(status?.toString())) {
-        card.classList.add(`card-status-${status}`);
-        text.textContent = STATUS_LABELS[status];
-    } else {
-        card.classList.add('card-status-unknown');
-        text.textContent = labelParDefaut;
-    }
+// Génère le code HTML d'une section de camp de manière dynamique
+function genererStructureCamp(camp) {
+    let rowsHtml = camp.zones.map(zone => `
+        <article id="row-${zone.cle}" class="zone-row status-unknown">
+            <div class="row-header">
+                <div class="day-info">
+                    <span class="day-label">Demain</span>
+                    <span class="zone-tag">${zone.label}</span>
+                </div>
+                <span id="${zone.cle}-tomorrow" class="badge-tomorrow">...</span>
+            </div>
+            <div class="today-line">
+                <span class="today-label">Aujourd'hui</span>
+                <span id="${zone.cle}-today" class="badge-today text-status-unknown">...</span>
+            </div>
+        </article>
+    `).join('');
+
+    return `
+        <section class="main-card">
+            <h2 class="card-title">${camp.titre}</h2>
+            <div class="rows-container">${rowsHtml}</div>
+        </section>
+    `;
 }
 
-function appliquerStyleToday(textId, status) {
-    const text = document.getElementById(textId);
-    if (!text) return;
-    
-    text.className = "badge-today";
-    if (["1", "2", "3", "4"].includes(status?.toString())) {
-        text.classList.add(`text-status-${status}`);
-        text.textContent = STATUS_LABELS[status].split(' (')[0];
-    } else {
-        text.classList.add('text-status-unknown');
-        text.textContent = "Non publié";
+function appliquerStyleRow(cle, statusTomorrow, statusToday) {
+    const row = document.getElementById(`row-${cle}`);
+    const txtTomorrow = document.getElementById(`${cle}-tomorrow`);
+    const txtToday = document.getElementById(`${cle}-today`);
+
+    // Style de la ligne globale (Demain)
+    if (row && txtTomorrow) {
+        row.className = "zone-row";
+        if (["1", "2", "3", "4"].includes(statusTomorrow?.toString())) {
+            row.classList.add(`card-status-${statusTomorrow}`);
+            txtTomorrow.textContent = STATUS_LABELS[statusTomorrow];
+        } else {
+            row.classList.add('card-status-unknown');
+            txtTomorrow.textContent = "Non disponible";
+        }
+    }
+
+    // Style de la ligne du bas (Aujourd'hui)
+    if (txtToday) {
+        txtToday.className = "badge-today";
+        if (["1", "2", "3", "4"].includes(statusToday?.toString())) {
+            txtToday.classList.add(`text-status-${statusToday}`);
+            txtToday.textContent = STATUS_LABELS[statusToday].split(' (')[0];
+        } else {
+            txtToday.classList.add('text-status-unknown');
+            txtToday.textContent = "Non publié";
+        }
     }
 }
 
 async function init() {
-    const url = './historique.json';
+    const container = document.getElementById('dashboard-container');
     
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Historique non trouvé");
-        const history = await response.json();
+        // 1. Charger la liste des camps configurés
+        const resCamps = await fetch('./camps.json');
+        if (!resCamps.ok) throw new Error("Impossible de charger camps.json");
+        const camps = await resCamps.json();
+
+        // 2. Construire le HTML sur la page
+        container.innerHTML = camps.map(camp => genererStructureCamp(camp)).join('');
+
+        // 3. Charger les données d'historique
+        const resHistory = await fetch('./historique.json');
+        if (!resHistory.ok) throw new Error("Impossible de charger historique.json");
+        const history = await resHistory.json();
         
         const todayKey = getIsoDate(0);
         const tomorrowKey = getIsoDate(1);
@@ -60,25 +96,18 @@ async function init() {
         const todayData = history.find(item => item.date === todayKey);
         const tomorrowData = history.find(item => item.date === tomorrowKey);
         
-        // 1. Rendu pour DEMAIN (Fonds colorés globaux)
-        appliquerStyleCard('card-calanques', 'calanques-tomorrow', tomorrowData?.calanques, "Non disponible");
-        appliquerStyleCard('card-sb13', 'sb13-tomorrow', tomorrowData?.sainteBaume13, "Non disponible");
-        appliquerStyleCard('card-sb83', 'sb83-tomorrow', tomorrowData?.sainteBaume83, "Non disponible");
-        appliquerStyleCard('card-garrigues', 'garrigues-tomorrow', tomorrowData?.garrigues, "Non disponible");
-        
-        // 2. Rendu pour AUJOURD'HUI (Petites lignes du bas)
-        appliquerStyleToday('calanques-today', todayData?.calanques);
-        appliquerStyleToday('sb13-today', todayData?.sainteBaume13);
-        appliquerStyleToday('sb83-today', todayData?.sainteBaume83);
-        appliquerStyleToday('garrigues-today', todayData?.garrigues);
+        // 4. Appliquer les styles pour chaque zone détectée dans la config
+        camps.forEach(camp => {
+            camp.zones.forEach(zone => {
+                const statusTomorrow = tomorrowData ? tomorrowData[zone.cle] : "unknown";
+                const statusToday = todayData ? todayData[zone.cle] : "unknown";
+                appliquerStyleRow(zone.cle, statusTomorrow, statusToday);
+            });
+        });
 
     } catch (e) {
-        console.error("Erreur lors de la lecture de l'historique :", e);
-        const errLabel = "Données indisponibles";
-        appliquerStyleCard('card-calanques', 'calanques-tomorrow', "unknown", errLabel);
-        appliquerStyleCard('card-sb13', 'sb13-tomorrow', "unknown", errLabel);
-        appliquerStyleCard('card-sb83', 'sb83-tomorrow', "unknown", errLabel);
-        appliquerStyleCard('card-garrigues', 'garrigues-tomorrow', "unknown", errLabel);
+        console.error("Erreur lors de l'initialisation du dashboard :", e);
+        container.innerHTML = `<div style="text-align: center; color: var(--c-4-badge); padding: 20px;">⚠️ Erreur de chargement des données.</div>`;
     }
 }
 

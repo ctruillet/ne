@@ -13,77 +13,12 @@
         <div class="subtitle">Prévisions des Massifs</div>
     </header>
 
-    <main class="container">
-        <section class="main-card">
-            <h2 class="card-title">📍 Massif des Calanques (Luminy)</h2>
-            <article id="card-calanques" class="zone-row status-unknown">
-                <div class="row-header">
-                    <div class="day-info">
-                        <span class="day-label">Demain</span>
-                        <span class="zone-tag">Calanques</span>
-                    </div>
-                    <span id="calanques-tomorrow" class="badge-tomorrow">Chargement...</span>
-                </div>
-                <div class="today-line">
-                    <span class="today-label">Aujourd'hui</span>
-                    <span id="calanques-today" class="badge-today text-status-unknown">...</span>
-                </div>
-            </article>
-        </section>
-
-        <section class="main-card">
-            <h2 class="card-title">📍 Massif de la Sainte-Baume (Gémenos)</h2>
-            <div class="rows-container">
-                <article id="card-sb13" class="zone-row status-unknown">
-                    <div class="row-header">
-                        <div class="day-info">
-                            <span class="day-label">Demain</span>
-                            <span class="zone-tag">Bouches-du-Rhône (13)</span>
-                        </div>
-                        <span id="sb13-tomorrow" class="badge-tomorrow">...</span>
-                    </div>
-                    <div class="today-line">
-                        <span class="today-label">Aujourd'hui</span>
-                        <span id="sb13-today" class="badge-today text-status-unknown">...</span>
-                    </div>
-                </article>
-
-                <article id="card-sb83" class="zone-row status-unknown">
-                    <div class="row-header">
-                        <div class="day-info">
-                            <span class="day-label">Demain</span>
-                            <span class="zone-tag">Var (83)</span>
-                        </div>
-                        <span id="sb83-tomorrow" class="badge-tomorrow">...</span>
-                    </div>
-                    <div class="today-line">
-                        <span class="today-label">Aujourd'hui</span>
-                        <span id="sb83-today" class="badge-today text-status-unknown">...</span>
-                    </div>
-                </article>
-            </div>
-        </section>
-
-        <section class="main-card">
-            <h2 class="card-title">📍 Garrigues (Pic St Loup)</h2>
-            <article id="card-garrigues" class="zone-row status-unknown">
-                <div class="row-header">
-                    <div class="day-info">
-                        <span class="day-label">Demain</span>
-                        <span class="zone-tag">Garrigues</span>
-                    </div>
-                    <span id="garrigues-tomorrow" class="badge-tomorrow">Chargement...</span>
-                </div>
-                <div class="today-line">
-                    <span class="today-label">Aujourd'hui</span>
-                    <span id="garrigues-today" class="badge-today text-status-unknown">...</span>
-                </div>
-            </article>
-        </section>
+    <main class="container" id="dashboard-container">
+        <div style="text-align: center; color: var(--text-muted); padding: 20px;">Chargement des configurations...</div>
     </main>
 
     <footer>
-        <p>Données issues des préfectures du 13 et 83.</p>
+        <p>Données issues des préfectures du 13, 34 et 83.</p>
         <a href="https://www.risque-prevention-incendie.fr" target="_blank" rel="noopener noreferrer" class="map-link">
             Voir la carte officielle
         </a>
