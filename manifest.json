@@ -1,0 +1,22 @@
+{
+  "name": "Nature Environnement Massifs",
+  "short_name": "NE Massifs",
+  "description": "Suivi des risques incendies dans les massifs",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f2f4f7",
+  "theme_color": "#007a5e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://chefscadres.sgdf.fr/nature-environnement/wp-content/uploads/sites/13/2021/04/cropped-favicon-ne-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://chefscadres.sgdf.fr/nature-environnement/wp-content/uploads/sites/13/2021/04/cropped-favicon-ne-32x32.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
