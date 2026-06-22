@@ -1,0 +1,166 @@
+:root {
+    --bg-color: #0f0f12;
+    --text-color: #ffffff;
+    --text-muted: #8e8e93;
+    
+    /* Couleurs officielles adaptées pour le thème sombre */
+    --color-1: #34c759; /* VERT */
+    --color-2: #ffcc00; /* JAUNE */
+    --color-3: #ff9500; /* ORANGE */
+    --color-4: #ff3b30; /* ROUGE */
+    --color-unknown: #2c2c2e;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 32px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 32px;
+    width: 100%;
+    max-width: 480px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-top: 6px;
+}
+
+.container {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Style général des cartes */
+.zone-card {
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+    background-color: #1c1c1e;
+    border: 1px solid #2c2c2e;
+}
+
+.zone-card:active {
+    transform: scale(0.99);
+}
+
+.zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.zone-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+.badge-tomorrow {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.tomorrow-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tomorrow-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.today-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 14px;
+}
+
+.today-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.badge-today {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Thèmes dynamiques selon le niveau de risque de DEMAIN */
+.card-status-1 { background: rgba(52, 199, 89, 0.06); border: 1px solid rgba(52, 199, 89, 0.35); }
+.card-status-1 .badge-tomorrow { color: var(--color-1); }
+
+.card-status-2 { background: rgba(255, 204, 0, 0.05); border: 1px solid rgba(255, 204, 0, 0.35); }
+.card-status-2 .badge-tomorrow { color: var(--color-2); }
+
+.card-status-3 { background: rgba(255, 149, 0, 0.05); border: 1px solid rgba(255, 149, 0, 0.35); }
+.card-status-3 .badge-tomorrow { color: var(--color-3); }
+
+.card-status-4 { background: rgba(255, 61, 48, 0.06); border: 1px solid rgba(255, 61, 48, 0.4); }
+.card-status-4 .badge-tomorrow { color: var(--color-4); }
+
+.card-status-unknown { background: #1c1c1e; border: 1px solid #2c2c2e; }
+.card-status-unknown .badge-tomorrow { color: var(--text-muted); }
+
+/* Couleurs simples pour le texte d'Aujourd'hui */
+.text-status-1 { color: var(--color-1); }
+.text-status-2 { color: var(--color-2); }
+.text-status-3 { color: var(--color-3); }
+.text-status-4 { color: var(--color-4); }
+.text-status-unknown { color: var(--text-muted); }
+
+footer {
+    margin-top: auto;
+    padding-top: 40px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.map-link {
+    color: #0a84ff;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-block;
+    margin-top: 8px;
+    padding: 8px 16px;
+    border: 1px solid rgba(10, 132, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(10, 132, 255, 0.05);
+    transition: background 0.2s ease;
+}
+
+.map-link:hover {
+    background: rgba(10, 132, 255, 0.15);
+}
