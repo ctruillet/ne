@@ -2,9 +2,9 @@ name: Update Risk Data
 
 on:
   schedule:
-    # S'exécute tous les jours à 17h05 (Heure de Paris)
-    - cron: '5 17 * * *'
-  workflow_dispatch: # Permet de le lancer à la main pour tester
+    # S'exécute tous les jours à 18h05 (Heure de Paris / 16h05 UTC)
+    - cron: '5 16 * * *'
+  workflow_dispatch: # Permet de lancer le script manuellement depuis l'onglet Actions
 
 jobs:
   update-data:
@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm install axios
 
-      - name: Fetch and Save Data
+      - name: Run history script
         run: |
           node -e "
           const axios = require('axios');
@@ -29,7 +29,7 @@ jobs:
 
           async function run() {
               const d = new Date();
-              d.setDate(d.getDate() + 1); // Demain
+              d.setDate(d.getDate() + 1); // Cible le fichier de demain
               const options = { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' };
               const parts = new Intl.DateTimeFormat('fr-FR', options).formatToParts(d);
               const year = parts.find(p => p.type === 'year').value;
@@ -39,36 +39,76 @@ jobs:
               const dateStr = \`\${year}\${month}\${day}\`;
 
               try {
-                  const response = await axios.get(\`https://www.risque-prevention-incendie.fr/static/13/import_data/\${dateStr}.json\`);
-                  const data = response.data;
+                  // 1. Récupération des Bouches-du-Rhône (13)
+                  const res13 = await axios.get(\`https://www.risque-prevention-incendie.fr/static/13/import_data/\${dateStr}.json\`);
+                  const data13 = res13.data;
                   
-                  let calanques = 'unknown';
-                  let sainteBaume = 'unknown';
-
-                  if (data && data.massifs) {
-                      calanques = (Array.isArray(data.massifs['133']) ? data.massifs['133'][0] : data.massifs['133']) || 'unknown';
-                      sainteBaume = (Array.isArray(data.massifs['1322']) ? data.massifs['1322'][0] : data.massifs['1322']) || 'unknown';
+                  // 2. Récupération du Var (83)
+                  let data83 = null;
+                  try {
+                      const res83 = await axios.get(\`https://www.risque-prevention-incendie.fr/static/83/import_data/\${dateStr}.json\`);
+                      data83 = res83.data;
+                  } catch(e) { 
+                      console.log('⚠️ Fichier du Var (83) indisponible pour le moment.'); 
                   }
 
-                  const payload = { date: dateKey, calanques, sainteBaume };
+                  // 3. Récupération de l'Hérault (34)
+                  let data34 = null;
+                  try {
+                      const res34 = await axios.get(\`https://www.risque-prevention-incendie.fr/static/34/import_data/\${dateStr}.json\`);
+                      data34 = res34.data;
+                  } catch(e) { 
+                      console.log('⚠️ Fichier de l\'Hérault (34) indisponible pour le moment.'); 
+                  }
+                  
+                  let calanques = 'unknown';
+                  let sainteBaume13 = 'unknown';
+                  let sainteBaume83 = 'unknown';
+                  let picStLoup = 'unknown';
 
-                  // 1. Sauvegarde du fichier temps réel pour l'appli
-                  fs.writeFileSync('./previsions.json', JSON.stringify(payload, null, 2));
+                  // Extraction Massifs 13
+                  if (data13 && data13.massifs) {
+                      calanques = (Array.isArray(data13.massifs['133']) ? data13.massifs['133'][0] : data13.massifs['133']) || 'unknown';
+                      sainteBaume13 = (Array.isArray(data13.massifs['1322']) ? data13.massifs['1322'][0] : data13.massifs['1322']) || 'unknown';
+                  }
 
-                  // 2. Mise à jour de l'historique cumulé
+                  // Extraction Massifs 83
+                  if (data83 && data83.massifs) {
+                      sainteBaume83 = (Array.isArray(data83.massifs['832']) ? data83.massifs['832'][0] : data83.massifs['832']) || 'unknown';
+                  }
+
+                  // Extraction Massifs 34
+                  if (data34 && data34.massifs) {
+                      garrigues = (Array.isArray(data34.massifs['344']) ? data34.massifs['344'][0] : data34.massifs['344']) || 'unknown';
+                  }
+
+                  // Construction du payload pour l'historique
+                  const payload = { 
+                      date: dateKey, 
+                      calanques: calanques.toString(), 
+                      sainteBaume13: sainteBaume13.toString(), 
+                      sainteBaume83: sainteBaume83.toString(),
+                      garrigues: garrigues.toString()
+                  };
+
+                  // Lecture et mise à jour du fichier historique.json
                   const historyPath = './historique.json';
                   let history = [];
                   if (fs.existsSync(historyPath)) {
                       history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
                   }
+                  
+                  // Supprime l'entrée si elle existe déjà pour éviter les doublons
                   history = history.filter(item => item.date !== dateKey);
                   history.push(payload);
+                  
+                  // Tri par ordre chronologique
                   history.sort((a, b) => a.date.localeCompare(b.date));
+                  
                   fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
-
-                  console.log('✅ Données mises à jour avec succès.');
+                  console.log('✅ Historique mis à jour avec succès pour le ' + dateKey);
               } catch (error) {
-                  console.error('❌ Erreur de récupération :', error.message);
+                  console.error('❌ Erreur générale de récupération :', error.message);
                   process.exit(1);
               }
           }
@@ -79,6 +119,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add previsions.json historique.json
-          git diff-index --quiet HEAD || git commit -m "Mise à jour automatique des risques"
+          git add historique.json
+          git diff-index --quiet HEAD || git commit -m "Mise à jour automatique des risques (4 massifs)"
           git push

@@ -3,52 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nature Environnement - Risques Massifs 13</title>
+    <title>Nature Environnement - Risques Massifs</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
         <h1>Nature Environnement</h1>
-        <div class="subtitle">Prévisions des Bouches-du-Rhône (13)</div>
+        <div class="subtitle">Prévisions des Massifs</div>
     </header>
 
     <main class="container">
-        <article id="card-calanques" class="zone-card card-status-unknown">
-            <div class="tomorrow-section">
-                <span class="tomorrow-label">Demain</span>
-                <div class="zone-header">
-                    <span class="zone-name">📍 Calanques</span>
+        <section class="main-card">
+            <h2 class="card-title">📍 Massif des Calanques (Luminy)</h2>
+            <article id="card-calanques" class="zone-row status-unknown">
+                <div class="row-header">
+                    <div class="day-info">
+                        <span class="day-label">Demain</span>
+                        <span class="zone-tag">Calanques</span>
+                    </div>
                     <span id="calanques-tomorrow" class="badge-tomorrow">Chargement...</span>
                 </div>
-            </div>
-            
-            <div class="today-section">
-                <span class="today-label">Risque aujourd'hui</span>
-                <span id="calanques-today" class="badge-today text-status-unknown">...</span>
-            </div>
-        </article>
-
-        <article id="card-saintebaume" class="zone-card card-status-unknown">
-            <div class="tomorrow-section">
-                <span class="tomorrow-label">Demain</span>
-                <div class="zone-header">
-                    <span class="zone-name">📍 Sainte-Baume</span>
-                    <span id="saintebaume-tomorrow" class="badge-tomorrow">Chargement...</span>
+                <div class="today-line">
+                    <span class="today-label">Aujourd'hui</span>
+                    <span id="calanques-today" class="badge-today text-status-unknown">...</span>
                 </div>
+            </article>
+        </section>
+
+        <section class="main-card">
+            <h2 class="card-title">📍 Massif de la Sainte-Baume (Gémenos)</h2>
+            <div class="rows-container">
+                <article id="card-sb13" class="zone-row status-unknown">
+                    <div class="row-header">
+                        <div class="day-info">
+                            <span class="day-label">Demain</span>
+                            <span class="zone-tag">Bouches-du-Rhône (13)</span>
+                        </div>
+                        <span id="sb13-tomorrow" class="badge-tomorrow">...</span>
+                    </div>
+                    <div class="today-line">
+                        <span class="today-label">Aujourd'hui</span>
+                        <span id="sb13-today" class="badge-today text-status-unknown">...</span>
+                    </div>
+                </article>
+
+                <article id="card-sb83" class="zone-row status-unknown">
+                    <div class="row-header">
+                        <div class="day-info">
+                            <span class="day-label">Demain</span>
+                            <span class="zone-tag">Var (83)</span>
+                        </div>
+                        <span id="sb83-tomorrow" class="badge-tomorrow">...</span>
+                    </div>
+                    <div class="today-line">
+                        <span class="today-label">Aujourd'hui</span>
+                        <span id="sb83-today" class="badge-today text-status-unknown">...</span>
+                    </div>
+                </article>
             </div>
-            
-            <div class="today-section">
-                <span class="today-label">Risque aujourd'hui</span>
-                <span id="saintebaume-today" class="badge-today text-status-unknown">...</span>
-            </div>
-        </article>
+        </section>
+
+        <section class="main-card">
+            <h2 class="card-title">📍 Garrigues (Pic St Loup)</h2>
+            <article id="card-garrigues" class="zone-row status-unknown">
+                <div class="row-header">
+                    <div class="day-info">
+                        <span class="day-label">Demain</span>
+                        <span class="zone-tag">Garrigues</span>
+                    </div>
+                    <span id="garrigues-tomorrow" class="badge-tomorrow">Chargement...</span>
+                </div>
+                <div class="today-line">
+                    <span class="today-label">Aujourd'hui</span>
+                    <span id="garrigues-today" class="badge-today text-status-unknown">...</span>
+                </div>
+            </article>
+        </section>
     </main>
 
     <footer>
-        <p>Données issues de la préfecture des Bouches-du-Rhône.</p>
+        <p>Données issues des préfectures du 13 et 83.</p>
         <a href="https://www.risque-prevention-incendie.fr" target="_blank" rel="noopener noreferrer" class="map-link">
-            🗺️ Voir la carte officielle
+            Voir la carte officielle
         </a>
     </footer>
 
