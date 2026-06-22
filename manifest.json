@@ -1,6 +1,6 @@
 {
-  "name": "Risque incendies Nature Environnement",
-  "short_name": "Risque incendies",
+  "name": "Risques incendies Nature Environnement",
+  "short_name": "Risques incendies",
   "description": "Suivi des risques incendies dans les massifs",
   "start_url": "./index.html",
   "display": "standalone",
@@ -9,12 +9,12 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://chefscadres.sgdf.fr/nature-environnement/wp-content/uploads/sites/13/2021/04/cropped-favicon-ne-192x192.png",
+      "src": "https://sgdf.fr/wp-content/themes/sgdf/assets/images/logos/android-icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://chefscadres.sgdf.fr/nature-environnement/wp-content/uploads/sites/13/2021/04/cropped-favicon-ne-32x32.png",
+      "src": "https://sgdf.fr/wp-content/themes/sgdf/assets/images/logos/favicon-32x32.png",
       "sizes": "512x512",
       "type": "image/png"
     }
