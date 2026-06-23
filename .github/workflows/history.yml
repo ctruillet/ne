@@ -3,7 +3,7 @@ name: Update Risk Data
 on:
   schedule:
     # S'exécute toutes les heures de 17h02 à 23h02 pour retenter si nécessaire
-    - cron: '2 17-23 * * *'
+    - cron: '2 17-17 * * *'
   workflow_dispatch:
 
 jobs:
