@@ -10,6 +10,16 @@ function getIsoDate(offset = 0) {
     return `${year}-${month}-${day}`;
 }
 
+async function fetchLiveData(dept, dateStr) {
+    // Note : Cela échouera si le serveur distant n'autorise pas CORS
+    try {
+        const response = await fetch(`https://www.risque-prevention-incendie.fr/static/${dept}/import_data/${dateStr}.json`);
+        return response.ok ? await response.json() : null;
+    } catch (e) {
+        return null;
+    }
+}
+
 // Génère le code HTML d'une section de camp de manière dynamique
 function genererStructureCamp(camp) {
     let rowsHtml = camp.zones.map(zone => `
@@ -80,50 +90,107 @@ function appliquerStyleRow(cle, statusTomorrow, statusToday, reglesDepartement) 
 
 async function init() {
     const container = document.getElementById('dashboard-container');
-    
+    const todayKey = getIsoDate(0);
+    const tomorrowKey = getIsoDate(1);
+    const todayStr = todayKey.replace(/-/g, '');
+    const tomorrowStr = tomorrowKey.replace(/-/g, '');
+
     try {
-        // 1. Chargement parallèle de toutes les ressources JSON nécessaires
+        // 1. Chargement initial rapide
         const [resCamps, resRegles, resHistory] = await Promise.all([
-            fetch('./camps.json'),
-            fetch('./regles.json'),
-            fetch('./historique.json')
+            fetch('./camps.json').then(r => r.json()),
+            fetch('./regles.json').then(r => r.json()),
+            fetch('./historique.json').then(r => r.json())
         ]);
 
-        if (!resCamps.ok || !resRegles.ok || !resHistory.ok) {
-            throw new Error("Erreur de communication lors du chargement des fichiers JSON.");
+        // 2. Affichage immédiat avec l'historique
+        container.innerHTML = resCamps.map(camp => genererStructureCamp(camp)).join('');
+        
+        const updateUI = (dataToday, dataTomorrow) => {
+            resCamps.forEach(camp => {
+                camp.zones.forEach(zone => {
+                    const statusToday = dataToday?.[zone.cle] || "unknown";
+                    const statusTomorrow = dataTomorrow?.[zone.cle] || "unknown";
+                    appliquerStyleRow(zone.cle, statusTomorrow, statusToday, resRegles[zone.dept]);
+                });
+            });
+        };
+
+        // Rendu initial
+        const hToday = resHistory.find(i => i.date === todayKey);
+        const hTomorrow = resHistory.find(i => i.date === tomorrowKey);
+        updateUI(hToday, hTomorrow);
+
+        // 3. Tenter la mise à jour "Live" en arrière-plan
+        const depts = [...new Set(resCamps.flatMap(c => c.zones.map(z => z.dept)))];
+        const liveData = { today: {}, tomorrow: {} };
+
+        for (const dept of depts) {
+            const dToday = await fetchLiveData(dept, todayStr);
+            const dTomorrow = await fetchLiveData(dept, tomorrowStr);
+            
+            // On mappe les résultats reçus vers la structure de votre historique
+            resCamps.forEach(c => c.zones.forEach(z => {
+                if (z.dept === dept) {
+                    if (dToday?.massifs?.[z.id_massif]) liveData.today[z.cle] = dToday.massifs[z.id_massif][0];
+                    if (dTomorrow?.massifs?.[z.id_massif]) liveData.tomorrow[z.cle] = dTomorrow.massifs[z.id_massif][0];
+                }
+            }));
         }
 
-        const camps = await resCamps.json();
-        const reglesGlobale = await resRegles.json();
-        const history = await resHistory.json();
-
-        // 2. Construire le squelette HTML des cartes sur la page
-        container.innerHTML = camps.map(camp => genererStructureCamp(camp)).join('');
-
-        // 3. Extraire les données de l'historique pour aujourd'hui et demain
-        const todayKey = getIsoDate(0);
-        const tomorrowKey = getIsoDate(1);
-        
-        const todayData = history.find(item => item.date === todayKey);
-        const tomorrowData = history.find(item => item.date === tomorrowKey);
-        
-        // 4. Appliquer les styles et infobulles pour chaque zone détectée dans la config
-        camps.forEach(camp => {
-            camp.zones.forEach(zone => {
-                const statusTomorrow = tomorrowData ? tomorrowData[zone.cle] : "unknown";
-                const statusToday = todayData ? todayData[zone.cle] : "unknown";
-                
-                // Récupération de la table de règles du département associé (ex: reglesGlobale["13"])
-                const reglesDept = reglesGlobale[zone.dept];
-                
-                appliquerStyleRow(zone.cle, statusTomorrow, statusToday, reglesDept);
-            });
-        });
+        // Si on a récupéré des données, on rafraîchit l'UI
+        if (Object.keys(liveData.today).length > 0 || Object.keys(liveData.tomorrow).length > 0) {
+            console.log("Données live récupérées, mise à jour de l'interface...");
+            updateUI(liveData.today, liveData.tomorrow);
+        }
 
     } catch (e) {
-        console.error("Erreur lors de l'initialisation du dashboard :", e);
-        container.innerHTML = `<div style="text-align: center; color: var(--c-4-badge); padding: 20px;">⚠️ Erreur de chargement des données.</div>`;
+        console.error("Erreur d'initialisation :", e);
     }
+    
+    // try {
+    //     // 1. Chargement parallèle de toutes les ressources JSON nécessaires
+    //     const [resCamps, resRegles, resHistory] = await Promise.all([
+    //         fetch('./camps.json'),
+    //         fetch('./regles.json'),
+    //         fetch('./historique.json')
+    //     ]);
+
+    //     if (!resCamps.ok || !resRegles.ok || !resHistory.ok) {
+    //         throw new Error("Erreur de communication lors du chargement des fichiers JSON.");
+    //     }
+
+    //     const camps = await resCamps.json();
+    //     const reglesGlobale = await resRegles.json();
+    //     const history = await resHistory.json();
+
+    //     // 2. Construire le squelette HTML des cartes sur la page
+    //     container.innerHTML = camps.map(camp => genererStructureCamp(camp)).join('');
+
+    //     // 3. Extraire les données de l'historique pour aujourd'hui et demain
+    //     const todayKey = getIsoDate(0);
+    //     const tomorrowKey = getIsoDate(1);
+        
+    //     const todayData = history.find(item => item.date === todayKey);
+    //     const tomorrowData = history.find(item => item.date === tomorrowKey);
+        
+    //     // 4. Appliquer les styles et infobulles pour chaque zone détectée dans la config
+    //     camps.forEach(camp => {
+    //         camp.zones.forEach(zone => {
+    //             const statusTomorrow = tomorrowData ? tomorrowData[zone.cle] : "unknown";
+    //             const statusToday = todayData ? todayData[zone.cle] : "unknown";
+                
+    //             // Récupération de la table de règles du département associé (ex: reglesGlobale["13"])
+    //             const reglesDept = reglesGlobale[zone.dept];
+                
+    //             appliquerStyleRow(zone.cle, statusTomorrow, statusToday, reglesDept);
+    //         });
+    //     });
+
+    // } catch (e) {
+    //     console.error("Erreur lors de l'initialisation du dashboard :", e);
+    //     container.innerHTML = `<div style="text-align: center; color: var(--c-4-badge); padding: 20px;">⚠️ Erreur de chargement des données.</div>`;
+    // }
 }
 
 // Lancement au chargement du script
