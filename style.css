@@ -6,7 +6,7 @@
     --sgdf-green: #007a5e;
     --border-color: #e2e8f0;
 
-    /* Thèmes de risques (Variables unifiées) */
+    /* Thèmes de risques */
     --c-0-bg: #f0fdf4; --c-0-text: #cdcfce; --c-0-border: #bbf7d0; --c-0-badge: #cccccc;
     --c-1-bg: #f0fdf4; --c-1-text: #166534; --c-1-border: #bbf7d0; --c-1-badge: #15803d;
     --c-2-bg: #fefce8; --c-2-text: #854d0e; --c-2-border: #fef08a; --c-2-badge: #a16207;
@@ -55,7 +55,6 @@ h1 {
     gap: 20px;
 }
 
-/* Le conteneur "Card" principal */
 .main-card {
     background-color: var(--card-bg);
     border-radius: 20px;
@@ -78,7 +77,6 @@ h1 {
     gap: 14px;
 }
 
-/* Les rangées internes de risques */
 .zone-row {
     border-radius: 14px;
     padding: 16px;
@@ -115,7 +113,8 @@ h1 {
     margin-top: 2px;
 }
 
-.badge-tomorrow {
+/* Le gros badge de droite (Aujourd'hui) */
+.badge-today-main {
     font-size: 0.85rem;
     font-weight: 700;
     padding: 6px 12px;
@@ -126,7 +125,8 @@ h1 {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.today-line {
+/* La ligne du bas (Demain) */
+.tomorrow-line {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -134,45 +134,46 @@ h1 {
     padding-top: 10px;
 }
 
-.today-label {
+.tomorrow-label {
     font-size: 0.85rem;
     color: var(--text-muted);
     font-weight: 500;
 }
 
-.badge-today {
+/* Le petit badge discret du bas */
+.badge-tomorrow-sub {
     font-size: 0.85rem;
     font-weight: 600;
     padding: 2px 8px;
     border-radius: 8px;
 }
 
-/* Styles dynamiques injectés */
+/* Styles dynamiques injectés basés sur la classe du conteneur parent */
 .card-status-0 { background-color: var(--c-0-bg); border-color: var(--c-0-border); color: var(--c-0-text); }
-.card-status-0 .badge-tomorrow { background-color: var(--c-0-badge); }
+.card-status-0 .badge-today-main { background-color: var(--c-0-badge); }
 .text-status-0 { background-color: rgba(174, 184, 178, 0.08); color: var(--c-0-badge); }
 
 .card-status-1 { background-color: var(--c-1-bg); border-color: var(--c-1-border); color: var(--c-1-text); }
-.card-status-1 .badge-tomorrow { background-color: var(--c-1-badge); }
+.card-status-1 .badge-today-main { background-color: var(--c-1-badge); }
 .text-status-1 { background-color: rgba(22, 101, 52, 0.08); color: var(--c-1-badge); }
 
 .card-status-2 { background-color: var(--c-2-bg); border-color: var(--c-2-border); color: var(--c-2-text); }
-.card-status-2 .badge-tomorrow { background-color: var(--c-2-badge); }
+.card-status-2 .badge-today-main { background-color: var(--c-2-badge); }
 .text-status-2 { background-color: rgba(161, 98, 7, 0.08); color: var(--c-2-badge); }
 
 .card-status-3 { background-color: var(--c-3-bg); border-color: var(--c-3-border); color: var(--c-3-text); }
-.card-status-3 .badge-tomorrow { background-color: var(--c-3-badge); }
+.card-status-3 .badge-today-main { background-color: var(--c-3-badge); }
 .text-status-3 { background-color: rgba(194, 65, 12, 0.08); color: var(--c-3-badge); }
 
 .card-status-4 { background-color: var(--c-4-bg); border-color: var(--c-4-border); color: var(--c-4-text); }
-.card-status-4 .badge-tomorrow { background-color: var(--c-4-badge); }
+.card-status-4 .badge-today-main { background-color: var(--c-4-badge); }
 .text-status-4 { background-color: rgba(185, 28, 28, 0.08); color: var(--c-4-badge); }
 
 .card-status-5 { background-color: #1e293b; border-color: #0f172a; color: #ffffff; }
-.card-status-5 .badge-tomorrow { background-color: #0f172a; border: 1px solid #334155; color: #ffffff; }
+.card-status-5 .badge-today-main { background-color: #0f172a; border: 1px solid #334155; color: #ffffff; }
 .text-status-5 { background-color: #0f172a; color: #ffffff; border: 1px solid #334155; }
 
-.card-status-unknown .badge-tomorrow { background-color: var(--c-unknown-badge); }
+.card-status-unknown .badge-today-main { background-color: var(--c-unknown-badge); }
 
 footer {
     margin-top: auto;
