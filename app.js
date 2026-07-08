@@ -15,12 +15,7 @@ async function fetchLiveData(dept, dateStr) {
         const response = await fetch(`https://www.risque-prevention-incendie.fr/static/${dept}/import_data/${dateStr}.json`);
         return response.ok ? await response.json() : null;
     } catch (e) {
-        try {
-            const response = await fetch(`https://corsproxy.io/?url=https://www.risque-prevention-incendie.fr/static/${dept}/import_data/${dateStr}.json`);
-            return response.ok ? await response.json() : null;
-        } catch (e) {
-            return null;
-        }
+        return null;
     }
 
     
