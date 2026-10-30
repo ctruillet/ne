@@ -46,11 +46,12 @@ function genererStructureCamp(camp, labels) {
         </article>`;
     }).join('');
 
+    const lienEte = `camp.html?camp=${encodeURIComponent(camp.id)}`;
     return `
         <section class="main-card">
-            <h2 class="card-title">${escapeHtml(camp.titre)}</h2>
+            <h2 class="card-title"><a href="${lienEte}">${escapeHtml(camp.titre)}</a></h2>
             <div class="rows-container">${rowsHtml}</div>
-            <a class="season-link" href="camp.html?camp=${encodeURIComponent(camp.id)}">Voir tout l'été →</a>
+            <a class="season-link" href="${lienEte}">📅 Historique de l'été</a>
         </section>`;
 }
 

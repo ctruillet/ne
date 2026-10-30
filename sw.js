@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ne-massifs-v4';
+const CACHE_NAME = 'ne-massifs-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -37,7 +37,10 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
   e.respondWith(
-    fetch(e.request)
+    // no-cache : contourne le cache HTTP du navigateur (10 min sur GitHub Pages)
+    // pour toujours récupérer la dernière version quand le réseau est là.
+    // On repart de l'URL : une requête de navigation ne peut pas être copiée avec d'autres options.
+    fetch(e.request.url, { cache: 'no-cache' })
       .then((response) => {
         if (response.ok) {
           const copy = response.clone();
