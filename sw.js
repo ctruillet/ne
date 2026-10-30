@@ -1,9 +1,12 @@
-const CACHE_NAME = 'ne-massifs-v3';
+const CACHE_NAME = 'ne-massifs-v4';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './common.js',
+  './camp.html',
+  './camp.js',
   './camps.json',
   './regles.json',
   './historique.json',

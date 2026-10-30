@@ -5,7 +5,7 @@
 
 FROM nginx:1.27-alpine AS web
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-COPY index.html style.css app.js sw.js manifest.json icon.svg camps.json regles.json /usr/share/nginx/html/
+COPY index.html camp.html style.css common.js app.js camp.js sw.js manifest.json icon.svg camps.json regles.json /usr/share/nginx/html/
 # Propriétaire 1000 (utilisateur « node » de l'image updater) : le volume
 # partagé reste modifiable quel que soit le service qui l'initialise
 RUN mkdir /data && chown 1000:1000 /data

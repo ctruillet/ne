@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Été du camp – Nature Environnement</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007a5e">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+</head>
+<body>
+
+    <header>
+        <a href="./" class="back-link">← Tous les camps</a>
+        <h1 id="camp-title">Été du camp</h1>
+        <select id="year-select" class="year-select" aria-label="Choisir l'année" hidden></select>
+    </header>
+
+    <main class="container" id="camp-container">
+        <p class="loading">Chargement...</p>
+    </main>
+
+    <footer>
+        <a href="https://www.risque-prevention-incendie.fr" target="_blank" rel="noopener noreferrer" class="map-link">
+            Voir la carte officielle
+        </a>
+    </footer>
+
+    <script src="common.js" defer></script>
+    <script src="camp.js" defer></script>
+</body>
+</html>
