@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ne-massifs-v2';
+const CACHE_NAME = 'ne-massifs-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -7,7 +7,8 @@ const ASSETS = [
   './camps.json',
   './regles.json',
   './historique.json',
-  './manifest.json'
+  './manifest.json',
+  './icon.svg'
 ];
 
 // Installation : mise en cache des fichiers de l'application

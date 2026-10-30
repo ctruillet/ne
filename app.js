@@ -1,10 +1,36 @@
 const API_URL = 'https://www.risque-prevention-incendie.fr/static';
+const JOURS_HISTORIQUE = 7;
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
-// Date du jour (+ offset) au format AAAA-MM-JJ, à l'heure de Paris
-function getIsoDate(offset = 0) {
+// Date (+ offset en jours) au format AAAA-MM-JJ, à l'heure de Paris.
+// Sans date de base, part d'aujourd'hui.
+function getIsoDate(offset = 0, base = null) {
+    if (base) {
+        // Midi UTC : évite tout décalage de jour lié aux fuseaux
+        const d = new Date(`${base}T12:00:00Z`);
+        d.setUTCDate(d.getUTCDate() + offset);
+        return d.toISOString().slice(0, 10);
+    }
     const d = new Date();
     d.setDate(d.getDate() + offset);
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(d);
+}
+
+function formatDate(isoDate, options = { weekday: 'short', day: 'numeric', month: 'short' }) {
+    return new Intl.DateTimeFormat('fr-FR', { ...options, timeZone: 'UTC' })
+        .format(new Date(`${isoDate}T12:00:00Z`));
+}
+
+// Date demandée via ?date=AAAA-MM-JJ, sinon null
+function getQueryDate() {
+    const date = new URLSearchParams(window.location.search).get('date');
+    return date && DATE_REGEX.test(date) ? date : null;
+}
+
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
 }
 
 async function fetchJson(url) {
@@ -28,30 +54,34 @@ function extractStatus(data, idMassif) {
     return status == null ? undefined : String(status);
 }
 
-// Aujourd'hui en haut (carte principale), Demain en bas
-function genererStructureCamp(camp) {
-    const rowsHtml = camp.zones.map(zone => `
-        <article id="row-${zone.cle}" class="zone-row card-status-unknown">
+function genererStructureCamp(camp, labels) {
+    const rowsHtml = camp.zones.map(zone => {
+        const cle = escapeHtml(zone.cle);
+        return `
+        <article id="row-${cle}" class="zone-row card-status-unknown">
             <div class="row-header">
                 <div class="day-info">
-                    <span class="day-label">Aujourd'hui</span>
-                    <span class="zone-tag">${zone.label}</span>
+                    <span class="day-label">${labels.jour}</span>
+                    <span class="zone-tag">${escapeHtml(zone.label)}</span>
                 </div>
-                <span id="${zone.cle}-today" class="badge-today-main">...</span>
+                <span id="${cle}-today" class="badge-today-main">...</span>
             </div>
             <div class="tomorrow-line">
-                <span class="tomorrow-label">Demain</span>
-                <span id="${zone.cle}-tomorrow" class="badge-tomorrow-sub text-status-unknown">...</span>
+                <span class="tomorrow-label">${labels.lendemain}</span>
+                <span id="${cle}-tomorrow" class="badge-tomorrow-sub text-status-unknown">...</span>
             </div>
-        </article>
-    `).join('');
+            <button type="button" class="detail-toggle" aria-expanded="false" aria-controls="${cle}-detail">
+                Détails et 7 derniers jours
+            </button>
+            <div id="${cle}-detail" class="zone-detail" hidden></div>
+        </article>`;
+    }).join('');
 
     return `
         <section class="main-card">
-            <h2 class="card-title">${camp.titre}</h2>
+            <h2 class="card-title">${escapeHtml(camp.titre)}</h2>
             <div class="rows-container">${rowsHtml}</div>
-        </section>
-    `;
+        </section>`;
 }
 
 function setTitle(el, config) {
@@ -59,7 +89,7 @@ function setTitle(el, config) {
     else el.removeAttribute('title');
 }
 
-// La ligne prend la couleur d'Aujourd'hui, Demain n'est qu'un petit badge
+// La ligne prend la couleur du jour affiché, le lendemain n'est qu'un petit badge
 function appliquerStyleRow(cle, statusToday, statusTomorrow, reglesDepartement) {
     const row = document.getElementById(`row-${cle}`);
     const txtToday = document.getElementById(`${cle}-today`);
@@ -81,10 +111,62 @@ function appliquerStyleRow(cle, statusToday, statusTomorrow, reglesDepartement) 
     }
 }
 
+// Panneau dépliable : texte réglementaire, source des données et tendance sur 7 jours
+function genererDetail({ zone, labels, statusToday, statusTomorrow, sources, regles, tendance }) {
+    const ligneDetail = (titre, status, source) => {
+        const config = regles?.[status];
+        const texte = config ? escapeHtml(config.detail) : 'Aucune donnée.';
+        const origine = config ? `<span class="source">${source}</span>` : '';
+        return `<p><strong>${titre} :</strong> ${texte} ${origine}</p>`;
+    };
+
+    const points = tendance.map(({ date, status }) => {
+        const config = regles?.[status];
+        const label = `${formatDate(date)} : ${config?.label ?? 'inconnu'}`;
+        return `<li class="dot dot-${config?.color ?? 'unknown'}" title="${escapeHtml(label)}">
+                    <span class="dot-day">${formatDate(date, { weekday: 'narrow' })}</span>
+                    <span class="visually-hidden">${escapeHtml(label)}</span>
+                </li>`;
+    }).join('');
+
+    return `
+        ${ligneDetail(labels.jour, statusToday, sources.today[zone.cle])}
+        ${ligneDetail(labels.lendemain, statusTomorrow, sources.tomorrow[zone.cle])}
+        <p class="trend-title">${JOURS_HISTORIQUE} jours précédents</p>
+        <ul class="trend">${points}</ul>`;
+}
+
+function brancherDetails(container) {
+    container.addEventListener('click', (e) => {
+        const bouton = e.target.closest('.detail-toggle');
+        if (!bouton) return;
+        const panneau = document.getElementById(bouton.getAttribute('aria-controls'));
+        const ouvert = bouton.getAttribute('aria-expanded') === 'true';
+        bouton.setAttribute('aria-expanded', String(!ouvert));
+        panneau.hidden = ouvert;
+    });
+}
+
+function afficherDepartements(zones) {
+    const depts = [...new Set(zones.map(z => z.dept))].sort();
+    const liste = depts.length > 1
+        ? `${depts.slice(0, -1).join(', ')} et ${depts.at(-1)}`
+        : depts.join('');
+    document.getElementById('footer-depts').textContent =
+        `Données issues des préfectures ${depts.length > 1 ? 'des départements' : 'du département'} ${liste}.`;
+}
+
 async function init() {
     const container = document.getElementById('dashboard-container');
-    const todayKey = getIsoDate(0);
-    const tomorrowKey = getIsoDate(1);
+    const statusLine = document.getElementById('status-line');
+
+    const dateDemandee = getQueryDate();
+    const todayKey = dateDemandee ?? getIsoDate(0);
+    const tomorrowKey = getIsoDate(1, todayKey);
+    const estAujourdhui = todayKey === getIsoDate(0);
+    const labels = estAujourdhui
+        ? { jour: "Aujourd'hui", lendemain: 'Demain' }
+        : { jour: formatDate(todayKey), lendemain: formatDate(tomorrowKey) };
 
     let camps, regles, history;
     try {
@@ -100,40 +182,71 @@ async function init() {
     }
 
     const zones = camps.flatMap(c => c.zones);
-    container.innerHTML = camps.map(genererStructureCamp).join('');
+    const historyByDate = new Map(history.map(item => [item.date, item]));
+    afficherDepartements(zones);
+    container.innerHTML = camps.map(camp => genererStructureCamp(camp, labels)).join('');
+    brancherDetails(container);
 
     // Statuts courants par clé de zone, initialisés depuis l'historique
     const statuts = {
-        today: { ...history.find(i => i.date === todayKey) },
-        tomorrow: { ...history.find(i => i.date === tomorrowKey) }
+        today: { ...historyByDate.get(todayKey) },
+        tomorrow: { ...historyByDate.get(tomorrowKey) }
     };
+    const sources = { today: {}, tomorrow: {} };
+    for (const jour of ['today', 'tomorrow']) {
+        for (const zone of zones) sources[jour][zone.cle] = '(historique)';
+    }
 
-    const updateUI = () => zones.forEach(zone =>
-        appliquerStyleRow(zone.cle, statuts.today[zone.cle], statuts.tomorrow[zone.cle], regles[zone.dept])
-    );
+    const datesTendance = Array.from({ length: JOURS_HISTORIQUE },
+        (_, i) => getIsoDate(i - JOURS_HISTORIQUE, todayKey));
+
+    const updateUI = () => zones.forEach(zone => {
+        const statusToday = statuts.today[zone.cle];
+        const statusTomorrow = statuts.tomorrow[zone.cle];
+        appliquerStyleRow(zone.cle, statusToday, statusTomorrow, regles[zone.dept]);
+        document.getElementById(`${zone.cle}-detail`).innerHTML = genererDetail({
+            zone, labels, statusToday, statusTomorrow, sources,
+            regles: regles[zone.dept],
+            tendance: datesTendance.map(date => ({ date, status: historyByDate.get(date)?.[zone.cle] }))
+        });
+    });
     updateUI();
+
+    // Pour une date passée, l'historique fait foi : pas d'appel au site officiel
+    if (!estAujourdhui) {
+        statusLine.textContent = `Données enregistrées pour le ${formatDate(todayKey, { day: 'numeric', month: 'long', year: 'numeric' })}`;
+        return;
+    }
+
+    statusLine.textContent = 'Vérification des données en direct...';
 
     // Données en direct : complètent ou remplacent l'historique zone par zone
     const depts = [...new Set(zones.map(z => z.dept))];
     const [liveToday, liveTomorrow] = await Promise.all(
-        [todayKey, tomorrowKey].map(key => {
+        [todayKey, tomorrowKey].map(async key => {
             const dateStr = key.replaceAll('-', '');
-            return Promise.all(depts.map(dept => fetchLiveData(dept, dateStr)))
-                .then(results => Object.fromEntries(depts.map((dept, i) => [dept, results[i]])));
+            const results = await Promise.all(depts.map(dept => fetchLiveData(dept, dateStr)));
+            return Object.fromEntries(depts.map((dept, i) => [dept, results[i]]));
         })
     );
 
-    let changed = false;
+    let nbLive = 0;
     for (const zone of zones) {
         for (const [jour, live] of [['today', liveToday], ['tomorrow', liveTomorrow]]) {
             const status = extractStatus(live[zone.dept], zone.id_massif);
             if (status !== undefined) {
                 statuts[jour][zone.cle] = status;
-                changed = true;
+                sources[jour][zone.cle] = '(site officiel, en direct)';
+                nbLive++;
             }
         }
     }
-    if (changed) updateUI();
+    if (nbLive > 0) updateUI();
+
+    const heure = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }).format(new Date());
+    statusLine.textContent = nbLive > 0
+        ? `Mis à jour à ${heure} depuis le site officiel`
+        : `Site officiel injoignable : données enregistrées (vérifié à ${heure})`;
 }
 
 init();

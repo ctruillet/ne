@@ -15,7 +15,10 @@ Application web statique pour suivre les restrictions d'accès aux massifs fores
 
 ## Automatisation
 Le workflow GitHub Actions (`.github/workflows/history.yml`) tourne tous les quarts d'heure entre 14h et 18h UTC.
-Il récupère les prévisions du lendemain sur le site officiel pour toutes les zones de `camps.json`, met à jour `historique.json` et pousse le commit. Une fois les données complètes, les exécutions suivantes de la journée s'arrêtent tout de suite.
+Il récupère les prévisions du lendemain sur le site officiel pour toutes les zones de `camps.json`, met à jour `historique.json` et pousse le commit. Tant que la préfecture n'a pas tout publié, l'exécution se termine sans erreur et la suivante réessaie. Une fois les données complètes, les exécutions suivantes de la journée s'arrêtent tout de suite.
+
+## Consulter une date passée
+Ajouter `?date=AAAA-MM-JJ` à l'adresse, par exemple https://ctruillet.github.io/ne/?date=2026-07-14 (données de l'historique uniquement).
 
 ## Ajouter un camp
 Modifier uniquement `camps.json` (le workflow et le site s'adaptent automatiquement) :

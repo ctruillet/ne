@@ -1,6 +1,6 @@
 // Récupère les niveaux de risque du lendemain pour toutes les zones de camps.json
-// et les enregistre dans historique.json. Sort en erreur (code 1) si des données
-// manquent encore, pour que la prochaine exécution planifiée réessaie.
+// et les enregistre dans historique.json. Si la préfecture n'a pas encore tout publié,
+// le script s'arrête sans erreur : la prochaine exécution planifiée réessaiera.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const API_URL = 'https://www.risque-prevention-incendie.fr/static';
@@ -58,8 +58,8 @@ for (const zone of zones) {
 }
 
 if (manquants.length > 0) {
-    console.error(`❌ Attente de publication, massifs manquants : ${manquants.join(', ')}`);
-    process.exit(1);
+    console.log(`⏳ Pas encore publié, massifs manquants : ${manquants.join(', ')}. Nouvelle tentative plus tard.`);
+    process.exit(0);
 }
 
 history = history.filter(item => item.date !== dateKey);

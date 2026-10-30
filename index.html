@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#007a5e">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <script>
@@ -20,6 +21,7 @@
     <header>
         <h1>Nature Environnement</h1>
         <div class="subtitle">Prévisions des Massifs</div>
+        <div id="status-line" class="status-line" role="status"></div>
     </header>
 
     <main class="container" id="dashboard-container">
@@ -27,7 +29,7 @@
     </main>
 
     <footer>
-        <p>Données issues des préfectures du 13, 34 et 83.</p>
+        <p id="footer-depts">Données issues des préfectures.</p>
         <a href="https://www.risque-prevention-incendie.fr" target="_blank" rel="noopener noreferrer" class="map-link">
             Voir la carte officielle
         </a>
