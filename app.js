@@ -2,41 +2,10 @@ const API_URL = 'https://www.risque-prevention-incendie.fr/static';
 const JOURS_HISTORIQUE = 7;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
-// Date (+ offset en jours) au format AAAA-MM-JJ, à l'heure de Paris.
-// Sans date de base, part d'aujourd'hui.
-function getIsoDate(offset = 0, base = null) {
-    if (base) {
-        // Midi UTC : évite tout décalage de jour lié aux fuseaux
-        const d = new Date(`${base}T12:00:00Z`);
-        d.setUTCDate(d.getUTCDate() + offset);
-        return d.toISOString().slice(0, 10);
-    }
-    const d = new Date();
-    d.setDate(d.getDate() + offset);
-    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(d);
-}
-
-function formatDate(isoDate, options = { weekday: 'short', day: 'numeric', month: 'short' }) {
-    return new Intl.DateTimeFormat('fr-FR', { ...options, timeZone: 'UTC' })
-        .format(new Date(`${isoDate}T12:00:00Z`));
-}
-
 // Date demandée via ?date=AAAA-MM-JJ, sinon null
 function getQueryDate() {
     const date = new URLSearchParams(window.location.search).get('date');
     return date && DATE_REGEX.test(date) ? date : null;
-}
-
-function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    })[c]);
-}
-
-async function fetchJson(url) {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`${url} : HTTP ${response.status}`);
-    return response.json();
 }
 
 async function fetchLiveData(dept, dateStr) {
@@ -81,6 +50,7 @@ function genererStructureCamp(camp, labels) {
         <section class="main-card">
             <h2 class="card-title">${escapeHtml(camp.titre)}</h2>
             <div class="rows-container">${rowsHtml}</div>
+            <a class="season-link" href="camp.html?camp=${encodeURIComponent(camp.id)}">Voir tout l'été →</a>
         </section>`;
 }
 
