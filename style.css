@@ -344,74 +344,168 @@ footer {
     text-decoration: none;
 }
 
-.year-select {
-    margin-top: 10px;
-    font: inherit;
-    font-size: 0.9rem;
-    padding: 6px 10px;
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-    background: var(--card-bg);
+/* Motifs par niveau pour les pastilles « 7 derniers jours » de l'accueil
+   (lisibilité pour les daltoniens) : points = autorisé sous conditions,
+   rayures = déconseillé, quadrillage = interdit. */
+.dot-2 {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.45) 1.5px, transparent 1.6px);
+    background-size: 6px 6px;
+}
+
+.dot-3 {
+    background-image: repeating-linear-gradient(45deg,
+        rgba(255, 255, 255, 0.35) 0 2px, transparent 2px 6px);
+}
+
+.dot-4, .dot-5 {
+    background-image:
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 1.5px, transparent 1.5px 6px),
+        repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.35) 0 1.5px, transparent 1.5px 6px);
+}
+
+.dot { text-shadow: 0 0 2px rgba(0, 0, 0, 0.6); }
+
+/* ---------- Page « été » : en-tête, onglets, chiffres clés ---------- */
+
+.camp-page .container { max-width: 760px; }
+
+.camp-header h1 {
+    font-size: 1.35rem;
+    line-height: 1.25;
     color: var(--text-color);
 }
 
-.season-headline {
-    margin: -6px 0 12px;
+.year-select {
+    margin-top: 10px;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
     color: var(--text-muted);
-    font-size: 0.9rem;
 }
 
-.season-headline strong {
-    color: var(--c-4-badge);
-    font-size: 1.1rem;
+.year-select:disabled { opacity: 1; appearance: none; text-align: center; }
+
+.zone-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--border-color);
 }
+
+.zone-tab {
+    flex: 1;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    cursor: pointer;
+}
+
+.zone-tab[aria-selected="true"] {
+    background: var(--card-bg);
+    color: var(--text-color);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.stat {
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+    background: var(--bg-color);
+}
+
+.stat-nb {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.stat-4 .stat-nb { color: var(--c-4-badge); }
+.stat-3 .stat-nb { color: var(--c-3-badge); }
+.stat-1 .stat-nb { color: var(--c-1-badge); }
 
 .season-bar {
     display: flex;
-    height: 12px;
-    border-radius: 6px;
+    height: 8px;
+    margin-top: 16px;
+    border-radius: 4px;
     overflow: hidden;
     gap: 2px;
 }
 
 .bar-part { min-width: 3px; }
+.bar-1 { background: var(--c-1-badge); }
+.bar-2 { background: var(--c-2-badge); }
+.bar-3 { background: var(--c-3-badge); }
+.bar-4, .bar-5 { background: var(--c-4-badge); }
+.bar-unknown { background: var(--c-unknown-border); }
+.bar-future { background: var(--border-color); }
 
 .legend {
     list-style: none;
     padding: 0;
-    margin: 12px 0 0;
-    display: grid;
-    gap: 6px;
-    font-size: 0.85rem;
-}
-
-.legend li {
+    margin: 10px 0 0;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
-.legend strong { margin-left: auto; }
-
-.muted { color: var(--text-muted); font-size: 0.8rem; min-width: 3.5em; text-align: right; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend strong { color: var(--text-color); }
 
 .legend-dot {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
+    border: 1px solid transparent;
     border-radius: 4px;
     flex-shrink: 0;
+    box-sizing: border-box;
 }
+
+.hint {
+    margin: 10px 0 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ---------- Page « été » : calendrier ---------- */
 
 .months {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px 28px;
     margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
 }
 
 .month-title {
     margin: 0 0 6px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
     text-transform: capitalize;
 }
 
@@ -424,74 +518,71 @@ footer {
 .weekday {
     text-align: center;
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-muted);
+    padding-bottom: 2px;
 }
 
+/* Jours : teinte douce pour les niveaux permissifs, rouge plein pour
+   « interdit » afin que ces jours ressortent au premier coup d'œil.
+   Un motif double la couleur (daltoniens) : points, rayures, quadrillage. */
 .cell {
-    aspect-ratio: 1;
-    border: none;
-    border-radius: 6px;
+    height: 32px;
+    border: 1px solid transparent;
+    border-radius: 8px;
     padding: 0;
     font: inherit;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #ffffff;
     cursor: pointer;
+    --motif: rgba(15, 23, 42, 0.14);
 }
 
-/* Couleurs partagées : cases du calendrier, barre et légende */
-.cell-1 { background-color: var(--c-1-badge); }
-.cell-2 { background-color: var(--c-2-badge); }
-.cell-3 { background-color: var(--c-3-badge); }
-.cell-4 { background-color: var(--c-4-badge); }
-.cell-5 { background-color: #0f172a; box-shadow: inset 0 0 0 1px #64748b; }
-.cell-unknown { background-color: var(--c-unknown-badge); opacity: 0.45; }
-.cell-future { background-color: var(--border-color); color: var(--text-muted); }
+.cell-1 { background-color: var(--c-1-bg); border-color: var(--c-1-border); color: var(--c-1-text); }
+.cell-2 {
+    background-color: var(--c-2-bg); border-color: var(--c-2-border); color: var(--c-2-text);
+    background-image: radial-gradient(var(--motif) 1.2px, transparent 1.4px);
+    background-size: 5px 5px;
+}
+.cell-3 {
+    background-color: var(--c-3-bg); border-color: var(--c-3-border); color: var(--c-3-text);
+    background-image: repeating-linear-gradient(45deg, var(--motif) 0 2px, transparent 2px 6px);
+}
+.cell-4, .cell-5 {
+    background-color: var(--c-4-badge); color: #ffffff; --motif: rgba(255, 255, 255, 0.22);
+    background-image:
+        repeating-linear-gradient(45deg, var(--motif) 0 1px, transparent 1px 6px),
+        repeating-linear-gradient(-45deg, var(--motif) 0 1px, transparent 1px 6px);
+}
+.cell-5 { background-color: #0f172a; }
+.cell-unknown { background: transparent; border: 1px dashed var(--c-unknown-border); color: var(--text-muted); }
+.cell-future { background: transparent; color: var(--text-muted); opacity: 0.6; }
 
-.cell-today { outline: 2px solid var(--text-color); outline-offset: 1px; }
-.cell-selected { outline: 3px solid var(--sgdf-green); outline-offset: 1px; }
+.cell-today { box-shadow: 0 0 0 2px var(--text-color); }
+.cell-selected { box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--sgdf-green); }
 
+/* Règle du jour touché : fixée en bas de l'écran, visible seulement après un toucher */
 .day-info-box {
-    /* Reste visible en bas de l'écran pendant qu'on parcourt le calendrier */
     position: sticky;
     bottom: 12px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
-    border: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
     margin: 16px 0 0;
     padding: 10px 12px;
-    border-radius: 10px;
-    background: var(--bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
     font-size: 0.85rem;
     line-height: 1.45;
-    color: var(--text-color);
 }
 
-/* ---------- Motifs par niveau (lisibilité pour les daltoniens) ----------
-   La couleur seule ne suffit pas à distinguer vert et rouge pour une partie
-   des lecteurs : chaque niveau restrictif ajoute un motif, visible aussi en
-   noir et blanc. S'applique au calendrier, à la barre, à la légende et aux
-   pastilles des 7 derniers jours.
-     1 Autorisé : uni
-     2 Autorisé sous conditions : points
-     3 Déconseillé : rayures diagonales
-     4 et 5 Interdit : quadrillage croisé */
-.cell-2, .dot-2 {
-    background-image: radial-gradient(rgba(255, 255, 255, 0.45) 1.5px, transparent 1.6px);
-    background-size: 6px 6px;
-}
+.day-info-box[hidden] { display: none; }
+.day-info-box .legend-dot { margin-top: 3px; }
 
-.cell-3, .dot-3 {
-    background-image: repeating-linear-gradient(45deg,
-        rgba(255, 255, 255, 0.35) 0 2px, transparent 2px 6px);
+@media (prefers-color-scheme: dark) {
+    .cell { --motif: rgba(255, 255, 255, 0.12); }
+    .cell-4, .cell-5 { --motif: rgba(255, 255, 255, 0.22); }
+    .zone-tabs { background: var(--bg-color); }
 }
-
-.cell-4, .dot-4, .cell-5, .dot-5 {
-    background-image:
-        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 1.5px, transparent 1.5px 6px),
-        repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.35) 0 1.5px, transparent 1.5px 6px);
-}
-
-/* Le numéro du jour reste lisible par-dessus le motif */
-.cell, .dot { text-shadow: 0 0 2px rgba(0, 0, 0, 0.6); }
-.cell-future { text-shadow: none; }
