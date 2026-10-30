@@ -2,7 +2,9 @@ name: Update Risk Data
 
 on:
   schedule:
-    - cron: 12,27,42,57 14-18 * * *
+    # Toutes les 15 min de 15h à 21h45 UTC (17h à 23h45 heure d'été de Paris),
+    # de mai à septembre. Le script vérifie lui-même la saison et l'heure exactes.
+    - cron: 7,22,37,52 15-21 * 5-9 *
   workflow_dispatch:
 
 permissions:
@@ -26,6 +28,9 @@ jobs:
 
       - name: Run history script
         run: node scripts/update-history.mjs
+        env:
+          # Un lancement manuel ignore la saison et l'horaire
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
 
       - name: Commit and Push changes
         run: |
