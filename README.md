@@ -14,8 +14,10 @@ Application web statique pour suivre les restrictions d'accès aux massifs fores
 - `scripts/update-history.mjs` : Script appelé par le workflow pour enregistrer les prévisions du lendemain.
 
 ## Automatisation
-Le workflow GitHub Actions (`.github/workflows/history.yml`) tourne tous les quarts d'heure entre 14h et 18h UTC.
-Il récupère les prévisions du lendemain sur le site officiel pour toutes les zones de `camps.json`, met à jour `historique.json` et pousse le commit. Tant que la préfecture n'a pas tout publié, l'exécution se termine sans erreur et la suivante réessaie. Une fois les données complètes, les exécutions suivantes de la journée s'arrêtent tout de suite.
+Le workflow GitHub Actions (`.github/workflows/history.yml`) lance `scripts/update-history.mjs` toutes les 15 minutes en soirée.
+Le script ne fait rien hors saison (du **1er juin au 30 septembre**) ni avant **17h** (heure de Paris). Pendant ce créneau, il récupère les prévisions du lendemain pour toutes les zones de `camps.json` et met à jour `historique.json` dès qu'une valeur change, y compris pour les mises à jour publiées dans la soirée par les préfectures, jusqu'à minuit.
+
+Un lancement manuel du workflow (« Run workflow ») ignore la saison et l'horaire.
 
 ## Consulter une date passée
 Ajouter `?date=AAAA-MM-JJ` à l'adresse, par exemple https://ctruillet.github.io/ne/?date=2026-07-14 (données de l'historique uniquement).
@@ -39,8 +41,8 @@ Le site est alors disponible sur http://localhost:8080 (port modifiable avec `PO
 
 Deux services sont lancés :
 - `web` : nginx qui sert le site.
-- `updater` : remplace le workflow GitHub Actions. Il lance `scripts/update-history.mjs` toutes les 15 minutes entre 14h et 18h UTC.
+- `updater` : remplace le workflow GitHub Actions. Il lance `scripts/update-history.mjs` toutes les 15 minutes, avec les mêmes règles de saison et d'horaire.
 
-`historique.json` est stocké dans le volume `data`, partagé entre les deux services. Au premier lancement, il est initialisé avec le fichier du dépôt. Les réglages se font par variables d'environnement du service `updater` : `UPDATE_INTERVAL_MINUTES` (défaut `15`) et `UPDATE_HOURS_UTC` (défaut `14-18`).
+`historique.json` est stocké dans le volume `data`, partagé entre les deux services. Au premier lancement, il est initialisé avec le fichier du dépôt. Les réglages se font par variables d'environnement du service `updater` : `UPDATE_INTERVAL_MINUTES` (défaut `15`), `SEASON` (défaut `06-01:09-30`) et `START_HOUR` (heure de Paris, défaut `17`).
 
 Après une modification de `camps.json` ou `regles.json`, reconstruire avec `docker compose up -d --build`.

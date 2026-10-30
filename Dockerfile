@@ -23,7 +23,8 @@ COPY docker/updater.sh /usr/local/bin/updater.sh
 ENV HISTORY_PATH=/data/historique.json \
     CAMPS_PATH=/app/camps.json \
     UPDATE_INTERVAL_MINUTES=15 \
-    UPDATE_HOURS_UTC=14-18 \
+    SEASON=06-01:09-30 \
+    START_HOUR=17 \
     TZ=Europe/Paris
 USER node
 CMD ["sh", "/usr/local/bin/updater.sh"]
