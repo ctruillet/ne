@@ -1,35 +1,37 @@
+const API_URL = 'https://www.risque-prevention-incendie.fr/static';
+
+// Date du jour (+ offset) au format AAAA-MM-JJ, à l'heure de Paris
 function getIsoDate(offset = 0) {
     const d = new Date();
     d.setDate(d.getDate() + offset);
-    const options = { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' };
-    const parts = new Intl.DateTimeFormat('fr-FR', options).formatToParts(d);
-    
-    const year = parts.find(p => p.type === 'year').value;
-    const month = parts.find(p => p.type === 'month').value;
-    const day = parts.find(p => p.type === 'day').value;
-    return `${year}-${month}-${day}`;
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(d);
+}
+
+async function fetchJson(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`${url} : HTTP ${response.status}`);
+    return response.json();
 }
 
 async function fetchLiveData(dept, dateStr) {
     try {
-        const response = await fetch(`https://www.risque-prevention-incendie.fr/static/${dept}/import_data/${dateStr}.json`);
-        return response.ok ? await response.json() : null;
-    } catch (e) {
+        return await fetchJson(`${API_URL}/${dept}/import_data/${dateStr}.json`);
+    } catch {
         return null;
     }
-
-    
 }
 
-function getQueryDate() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('date');
+// La valeur d'un massif peut être un tableau [niveau, ...] ou directement le niveau
+function extractStatus(data, idMassif) {
+    const value = data?.massifs?.[idMassif];
+    const status = Array.isArray(value) ? value[0] : value;
+    return status == null ? undefined : String(status);
 }
 
-// Génère le code HTML - INVERSÉ : Aujourd'hui est en haut, Demain est en bas
+// Aujourd'hui en haut (carte principale), Demain en bas
 function genererStructureCamp(camp) {
-    let rowsHtml = camp.zones.map(zone => `
-        <article id="row-${zone.cle}" class="zone-row status-unknown">
+    const rowsHtml = camp.zones.map(zone => `
+        <article id="row-${zone.cle}" class="zone-row card-status-unknown">
             <div class="row-header">
                 <div class="day-info">
                     <span class="day-label">Aujourd'hui</span>
@@ -52,44 +54,30 @@ function genererStructureCamp(camp) {
     `;
 }
 
-// Applique les styles de manière inversée (la carte prend la couleur d'Aujourd'hui)
-function appliquerStyleRow(cle, statusTomorrow, statusToday, reglesDepartement) {
+function setTitle(el, config) {
+    if (config) el.title = config.detail;
+    else el.removeAttribute('title');
+}
+
+// La ligne prend la couleur d'Aujourd'hui, Demain n'est qu'un petit badge
+function appliquerStyleRow(cle, statusToday, statusTomorrow, reglesDepartement) {
     const row = document.getElementById(`row-${cle}`);
     const txtToday = document.getElementById(`${cle}-today`);
     const txtTomorrow = document.getElementById(`${cle}-tomorrow`);
 
-    const configToday = reglesDepartement?.[statusToday?.toString()];
-    const configTomorrow = reglesDepartement?.[statusTomorrow?.toString()];
+    const configToday = reglesDepartement?.[statusToday];
+    const configTomorrow = reglesDepartement?.[statusTomorrow];
 
-    // Rendu principal pour AUJOURD'HUI (gère le fond de la ligne complète et le gros badge)
     if (row && txtToday) {
-        row.className = "zone-row";
-        if (configToday) {
-            row.classList.add(`card-status-${configToday.color}`);
-            txtToday.textContent = configToday.label;
-            
-            row.setAttribute('title', configToday.detail);
-            txtToday.setAttribute('title', configToday.detail);
-        } else {
-            row.classList.add('card-status-unknown');
-            txtToday.textContent = "Non disponible";
-            row.removeAttribute('title');
-        }
+        row.className = `zone-row card-status-${configToday?.color ?? 'unknown'}`;
+        txtToday.textContent = configToday?.label ?? 'Non disponible';
+        setTitle(row, configToday);
+        setTitle(txtToday, configToday);
     }
-
-    // Rendu secondaire pour DEMAIN (petite ligne du bas)
     if (txtTomorrow) {
-        txtTomorrow.className = "badge-tomorrow-sub";
-        if (configTomorrow) {
-            txtTomorrow.classList.add(`text-status-${configTomorrow.color}`);
-            txtTomorrow.textContent = configTomorrow.label;
-            
-            txtTomorrow.setAttribute('title', configTomorrow.detail);
-        } else {
-            txtTomorrow.classList.add('text-status-unknown');
-            txtTomorrow.textContent = "Non publié";
-            txtTomorrow.removeAttribute('title');
-        }
+        txtTomorrow.className = `badge-tomorrow-sub text-status-${configTomorrow?.color ?? 'unknown'}`;
+        txtTomorrow.textContent = configTomorrow?.label ?? 'Non publié';
+        setTitle(txtTomorrow, configTomorrow);
     }
 }
 
@@ -97,55 +85,55 @@ async function init() {
     const container = document.getElementById('dashboard-container');
     const todayKey = getIsoDate(0);
     const tomorrowKey = getIsoDate(1);
-    const todayStr = todayKey.replace(/-/g, '');
-    const tomorrowStr = tomorrowKey.replace(/-/g, '');
 
+    let camps, regles, history;
     try {
-        const [resCamps, resRegles, resHistory] = await Promise.all([
-            fetch('./camps.json').then(r => r.json()),
-            fetch('./regles.json').then(r => r.json()),
-            fetch('./historique.json').then(r => r.json())
+        [camps, regles, history] = await Promise.all([
+            fetchJson('./camps.json'),
+            fetchJson('./regles.json'),
+            fetchJson('./historique.json')
         ]);
-
-        container.innerHTML = resCamps.map(camp => genererStructureCamp(camp)).join('');
-        
-        const updateUI = (dataToday, dataTomorrow) => {
-            resCamps.forEach(camp => {
-                camp.zones.forEach(zone => {
-                    const statusToday = dataToday?.[zone.cle] || "unknown";
-                    const statusTomorrow = dataTomorrow?.[zone.cle] || "unknown";
-                    appliquerStyleRow(zone.cle, statusTomorrow, statusToday, resRegles[zone.dept]);
-                });
-            });
-        };
-
-        const hToday = resHistory.find(i => i.date === todayKey);
-        const hTomorrow = resHistory.find(i => i.date === tomorrowKey);
-        updateUI(hToday, hTomorrow);
-
-        const depts = [...new Set(resCamps.flatMap(c => c.zones.map(z => z.dept)))];
-        const liveData = { today: {}, tomorrow: {} };
-
-        for (const dept of depts) {
-            const dToday = await fetchLiveData(dept, todayStr);
-            const dTomorrow = await fetchLiveData(dept, tomorrowStr);
-            
-            resCamps.forEach(c => c.zones.forEach(z => {
-                if (z.dept === dept) {
-                    if (dToday?.massifs?.[z.id_massif]) liveData.today[z.cle] = dToday.massifs[z.id_massif][0];
-                    if (dTomorrow?.massifs?.[z.id_massif]) liveData.tomorrow[z.cle] = dTomorrow.massifs[z.id_massif][0];
-                }
-            }));
-        }
-
-        if (Object.keys(liveData.today).length > 0 || Object.keys(liveData.tomorrow).length > 0) {
-            console.log("Données live récupérées, mise à jour de l'interface...");
-            updateUI(liveData.today, liveData.tomorrow);
-        }
-
     } catch (e) {
         console.error("Erreur d'initialisation :", e);
+        container.innerHTML = '<p class="loading">Impossible de charger les données. Réessayez plus tard.</p>';
+        return;
     }
+
+    const zones = camps.flatMap(c => c.zones);
+    container.innerHTML = camps.map(genererStructureCamp).join('');
+
+    // Statuts courants par clé de zone, initialisés depuis l'historique
+    const statuts = {
+        today: { ...history.find(i => i.date === todayKey) },
+        tomorrow: { ...history.find(i => i.date === tomorrowKey) }
+    };
+
+    const updateUI = () => zones.forEach(zone =>
+        appliquerStyleRow(zone.cle, statuts.today[zone.cle], statuts.tomorrow[zone.cle], regles[zone.dept])
+    );
+    updateUI();
+
+    // Données en direct : complètent ou remplacent l'historique zone par zone
+    const depts = [...new Set(zones.map(z => z.dept))];
+    const [liveToday, liveTomorrow] = await Promise.all(
+        [todayKey, tomorrowKey].map(key => {
+            const dateStr = key.replaceAll('-', '');
+            return Promise.all(depts.map(dept => fetchLiveData(dept, dateStr)))
+                .then(results => Object.fromEntries(depts.map((dept, i) => [dept, results[i]])));
+        })
+    );
+
+    let changed = false;
+    for (const zone of zones) {
+        for (const [jour, live] of [['today', liveToday], ['tomorrow', liveTomorrow]]) {
+            const status = extractStatus(live[zone.dept], zone.id_massif);
+            if (status !== undefined) {
+                statuts[jour][zone.cle] = status;
+                changed = true;
+            }
+        }
+    }
+    if (changed) updateUI();
 }
 
 init();
