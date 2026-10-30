@@ -31,6 +31,11 @@ jobs:
         env:
           # Un lancement manuel ignore la saison et l'horaire
           FORCE: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+          # Alertes ntfy : sans le secret NTFY_TOPIC, aucune alerte n'est envoyée
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          NTFY_SERVER: ${{ vars.NTFY_SERVER }}
+          ALERT_MIN_COLOR: ${{ vars.ALERT_MIN_COLOR }}
 
       - name: Commit and Push changes
         run: |

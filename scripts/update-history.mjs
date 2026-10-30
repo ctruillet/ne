@@ -11,11 +11,14 @@
 //   SEASON      : saison au format MM-JJ:MM-JJ (défaut 06-01:09-30)
 //   START_HOUR  : heure de Paris à partir de laquelle interroger (défaut 17)
 //   FORCE=1     : ignore la saison et l'horaire (lancement manuel)
+//   NTFY_*, ALERT_MIN_COLOR, SITE_URL : alertes, voir notify.mjs
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { construireAlertes, envoyerAlertes } from './notify.mjs';
 
 const API_URL = 'https://www.risque-prevention-incendie.fr/static';
 const HISTORY_PATH = new URL('../historique.json', import.meta.url);
 const CAMPS_PATH = new URL('../camps.json', import.meta.url);
+const REGLES_PATH = new URL('../regles.json', import.meta.url);
 const [SEASON_START, SEASON_END] = (process.env.SEASON ?? '06-01:09-30').split(':');
 const START_HOUR = Number(process.env.START_HOUR ?? 17);
 const FORCE = process.env.FORCE === '1';
@@ -65,9 +68,12 @@ if (!FORCE) {
     }
 }
 
-const zones = JSON.parse(readFileSync(CAMPS_PATH, 'utf8')).flatMap(c => c.zones);
+const camps = JSON.parse(readFileSync(CAMPS_PATH, 'utf8'));
+const regles = JSON.parse(readFileSync(REGLES_PATH, 'utf8'));
+const zones = camps.flatMap(c => c.zones);
 const history = existsSync(HISTORY_PATH) ? JSON.parse(readFileSync(HISTORY_PATH, 'utf8')) : [];
 const existant = history.find(item => item.date === dateKey);
+const veille = history.find(item => item.date === getParisDate(0));
 
 const depts = [...new Set(zones.map(z => z.dept))];
 const dataByDept = Object.fromEntries(
@@ -83,7 +89,16 @@ for (const zone of zones) {
     const nouveau = extractStatus(dataByDept[zone.dept], zone.id_massif);
     if (nouveau === null) manquants.push(zone.cle);
     entry[zone.cle] = nouveau ?? ancien;
-    if (entry[zone.cle] !== ancien) changements.push(`${zone.cle} ${ancien} → ${entry[zone.cle]}`);
+    if (entry[zone.cle] !== ancien) {
+        const revision = ancien !== 'unknown';
+        changements.push({
+            zone,
+            ancien: revision ? ancien : (veille?.[zone.cle] ?? 'unknown'),
+            nouveau: entry[zone.cle],
+            revision,
+            texte: `${zone.cle} ${ancien} → ${entry[zone.cle]}`
+        });
+    }
 }
 
 if (manquants.length > 0) {
@@ -100,4 +115,6 @@ nouvelHistorique.push(entry);
 nouvelHistorique.sort((a, b) => a.date.localeCompare(b.date));
 
 writeFileSync(HISTORY_PATH, JSON.stringify(nouvelHistorique, null, 2));
-console.log(`✅ Historique mis à jour pour le ${dateKey} : ${changements.join(', ')}`);
+console.log(`✅ Historique mis à jour pour le ${dateKey} : ${changements.map(c => c.texte).join(', ')}`);
+
+await envoyerAlertes(construireAlertes({ date: dateKey, changements, camps, regles }));

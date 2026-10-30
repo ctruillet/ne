@@ -16,7 +16,7 @@ HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO /dev/null http://127.0.0.1/
 FROM node:24-alpine AS updater
 WORKDIR /app
 COPY scripts/ scripts/
-COPY camps.json ./
+COPY camps.json regles.json ./
 # Le script écrit ../historique.json : on le redirige vers le volume partagé
 RUN mkdir /data && chown node:node /data && ln -s /data/historique.json /app/historique.json
 COPY --chown=node:node historique.json /data/historique.json
