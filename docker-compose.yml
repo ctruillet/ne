@@ -16,10 +16,13 @@ services:
     volumes:
       - data:/data
     environment:
-      # Alertes ntfy (voir README) : laisser NTFY_TOPIC vide pour les désactiver
-      NTFY_TOPIC: ${NTFY_TOPIC:-}
-      NTFY_TOKEN: ${NTFY_TOKEN:-}
-      NTFY_SERVER: ${NTFY_SERVER:-}
+      # Alertes e-mail (voir README) : laisser SMTP_HOST vide pour les désactiver
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_TO: ${MAIL_TO:-}
+      MAIL_FROM: ${MAIL_FROM:-}
       ALERT_MIN_COLOR: ${ALERT_MIN_COLOR:-}
       SITE_URL: ${SITE_URL:-}
     restart: unless-stopped

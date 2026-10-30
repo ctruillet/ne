@@ -1,14 +1,16 @@
-// Alertes ntfy (https://ntfy.sh) quand le niveau de demain d'un camp est restrictif.
+// Alertes par e-mail quand le niveau de demain d'un camp devient restrictif.
 //
 // Variables d'environnement :
-//   NTFY_TOPIC        : nom du sujet ntfy (sans lui, aucune alerte n'est envoyée)
-//   NTFY_SERVER       : serveur ntfy (défaut https://ntfy.sh)
-//   NTFY_TOKEN        : jeton d'accès, si le sujet est protégé (optionnel)
+//   SMTP_HOST, SMTP_USER, SMTP_PASS : serveur d'envoi et identifiants
+//                       (sans eux, aucune alerte n'est envoyée)
+//   SMTP_PORT         : port TLS (défaut 465)
+//   MAIL_TO           : destinataires, séparés par des virgules (copie cachée)
+//   MAIL_FROM         : expéditeur affiché (défaut : SMTP_USER)
 //   ALERT_MIN_COLOR   : niveau de couleur à partir duquel alerter (défaut 3 = déconseillé)
-//   SITE_URL          : adresse du site, pour le lien de l'alerte
-//   NTFY_DRY_RUN=1    : affiche les alertes au lieu de les envoyer (tests)
+//   SITE_URL          : adresse du site, pour les liens de l'e-mail
+//   MAIL_DRY_RUN=1    : affiche l'e-mail au lieu de l'envoyer (tests)
+import { envoyerEmail } from './smtp.mjs';
 
-const NTFY_SERVER = (process.env.NTFY_SERVER || 'https://ntfy.sh').replace(/\/$/, '');
 const ALERT_MIN_COLOR = Number(process.env.ALERT_MIN_COLOR || 3);
 const SITE_URL = (process.env.SITE_URL || 'https://ctruillet.github.io/ne').replace(/\/$/, '');
 
@@ -40,13 +42,14 @@ export function construireAlertes({ date, changements, camps, regles }) {
                 return {
                     ...c,
                     config: reglesDept?.[c.nouveau],
+                    ancienLabel: reglesDept?.[c.ancien]?.label,
                     avant: couleur(reglesDept, c.ancien),
                     apres: couleur(reglesDept, c.nouveau)
                 };
             })
             .filter(l => l.config && doitAlerter(l.avant, l.apres))
             // Révision sans effet visible (ex. 13 : niveaux 3 et 4 tous deux « Interdit »)
-            .filter(l => !(l.revision && regles[l.zone.dept]?.[l.ancien]?.label === l.config.label && l.avant === l.apres));
+            .filter(l => !(l.revision && l.ancienLabel === l.config.label && l.avant === l.apres));
         if (lignes.length === 0) continue;
 
         const pire = lignes.reduce((a, b) => (b.apres > a.apres ? b : a));
@@ -54,54 +57,73 @@ export function construireAlertes({ date, changements, camps, regles }) {
         const restrictif = pire.apres >= ALERT_MIN_COLOR;
 
         alertes.push({
-            title: restrictif
+            date,
+            niveau: pire.apres,
+            titre: restrictif
                 ? `${nomCamp} : accès ${pire.config.label.toLowerCase()} demain`
                 : `${nomCamp} : accès de nouveau ${pire.config.label.toLowerCase()} demain`,
-            message: [
-                `Prévision pour ${formatDate(date)} :`,
-                ...lignes.map(l => {
-                    const ancienLabel = regles[l.zone.dept]?.[l.ancien]?.label;
-                    const evolution = !ancienLabel || ancienLabel === l.config.label ? ''
-                        : l.revision ? ` (prévision révisée, avant : ${ancienLabel})` : ` (aujourd'hui : ${ancienLabel})`;
-                    return `• ${l.zone.label} : ${l.config.label}${evolution}\n  ${l.config.detail}`;
-                })
-            ].join('\n'),
-            priority: pire.apres >= 4 ? 4 : 3,
-            tags: [pire.apres >= 4 ? 'fire' : pire.apres >= ALERT_MIN_COLOR ? 'warning' : 'white_check_mark'],
-            click: `${SITE_URL}/camp.html?camp=${encodeURIComponent(camp.id)}`
+            details: lignes.map(l => {
+                const evolution = !l.ancienLabel || l.ancienLabel === l.config.label ? ''
+                    : l.revision ? ` (prévision révisée, avant : ${l.ancienLabel})` : ` (aujourd'hui : ${l.ancienLabel})`;
+                return `• ${l.zone.label} : ${l.config.label}${evolution}\n  ${l.config.detail}`;
+            }),
+            lien: `${SITE_URL}/camp.html?camp=${encodeURIComponent(camp.id)}`
         });
     }
     return alertes;
 }
 
+// Regroupe toutes les alertes dans un seul e-mail
+export function construireEmail(alertes) {
+    const icone = (niveau) => (niveau >= 4 ? '🔥' : niveau >= ALERT_MIN_COLOR ? '⚠️' : '✅');
+    const pire = alertes.reduce((a, b) => (b.niveau > a.niveau ? b : a));
+    const subject = alertes.length === 1
+        ? `${icone(pire.niveau)} ${pire.titre}`
+        : `${icone(pire.niveau)} ${alertes.length} camps concernés demain : ${alertes.map(a => a.titre.split(' : ')[0]).join(', ')}`;
+
+    const text = [
+        `Prévision pour ${formatDate(pire.date)} :`,
+        '',
+        ...alertes.map(a => `${icone(a.niveau)} ${a.titre}\n${a.details.join('\n')}\nVoir l'historique : ${a.lien}\n`),
+        '—',
+        `Tous les camps : ${SITE_URL}/`,
+        'Carte officielle : https://www.risque-prevention-incendie.fr'
+    ].join('\n');
+
+    return { subject, text };
+}
+
 // Envoie les alertes. Une erreur d'envoi est signalée mais ne fait jamais
 // échouer la mise à jour de l'historique.
 export async function envoyerAlertes(alertes) {
-    const topic = process.env.NTFY_TOPIC;
     if (alertes.length === 0) return;
-    if (process.env.NTFY_DRY_RUN === '1') {
-        for (const a of alertes) console.log(`🔔 [test] ${a.title}\n${a.message}\n→ ${a.click}`);
-        return;
-    }
-    if (!topic) {
-        console.log(`🔕 ${alertes.length} alerte(s) non envoyée(s) : NTFY_TOPIC n'est pas défini.`);
+    const { subject, text } = construireEmail(alertes);
+
+    if (process.env.MAIL_DRY_RUN === '1') {
+        console.log(`📧 [test] ${subject}\n${text}`);
         return;
     }
 
-    const headers = { 'Content-Type': 'application/json' };
-    if (process.env.NTFY_TOKEN) headers.Authorization = `Bearer ${process.env.NTFY_TOKEN}`;
+    const { SMTP_HOST, SMTP_USER, SMTP_PASS } = process.env;
+    const to = (process.env.MAIL_TO || '').split(',').map(a => a.trim()).filter(Boolean);
+    if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || to.length === 0) {
+        console.log(`🔕 Alerte non envoyée (configuration e-mail incomplète) : ${subject}`);
+        return;
+    }
 
-    for (const alerte of alertes) {
-        try {
-            const res = await fetch(NTFY_SERVER, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ topic, ...alerte })
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            console.log(`🔔 Alerte envoyée : ${alerte.title}`);
-        } catch (e) {
-            console.log(`⚠️ Échec de l'envoi de l'alerte « ${alerte.title} » (${e.message}).`);
-        }
+    try {
+        await envoyerEmail({
+            host: SMTP_HOST,
+            port: Number(process.env.SMTP_PORT || 465),
+            user: SMTP_USER,
+            pass: SMTP_PASS,
+            from: process.env.MAIL_FROM || SMTP_USER,
+            to,
+            subject,
+            text
+        });
+        console.log(`📧 Alerte envoyée à ${to.length} destinataire(s) : ${subject}`);
+    } catch (e) {
+        console.log(`⚠️ Échec de l'envoi de l'alerte « ${subject} » (${e.message}).`);
     }
 }

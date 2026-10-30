@@ -11,7 +11,7 @@
 //   SEASON      : saison au format MM-JJ:MM-JJ (défaut 06-01:09-30)
 //   START_HOUR  : heure de Paris à partir de laquelle interroger (défaut 17)
 //   FORCE=1     : ignore la saison et l'horaire (lancement manuel)
-//   NTFY_*, ALERT_MIN_COLOR, SITE_URL : alertes, voir notify.mjs
+//   SMTP_*, MAIL_*, ALERT_MIN_COLOR, SITE_URL : alertes e-mail, voir notify.mjs
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { construireAlertes, envoyerAlertes } from './notify.mjs';
 

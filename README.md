@@ -14,7 +14,7 @@ Application web statique pour suivre les restrictions d'accès aux massifs fores
 - `regles.json` : Légende, couleurs et textes réglementaires par département (13, 34, 83).
 - `historique.json` : Base de données contenant les états des risques.
 - `scripts/update-history.mjs` : Script appelé par le workflow pour enregistrer les prévisions du lendemain.
-- `scripts/notify.mjs` : Envoi des alertes ntfy.
+- `scripts/notify.mjs` / `scripts/smtp.mjs` : Envoi des alertes par e-mail (sans dépendance externe).
 
 ## Automatisation
 Le workflow GitHub Actions (`.github/workflows/history.yml`) lance `scripts/update-history.mjs` toutes les 15 minutes en soirée.
@@ -22,20 +22,25 @@ Le script ne fait rien hors saison (du **1er juin au 30 septembre**) ni avant **
 
 Un lancement manuel du workflow (« Run workflow ») ignore la saison et l'horaire.
 
-## Alertes sur téléphone
-Quand la prévision de demain d'un camp devient restrictive (**déconseillé** ou **interdit**), une alerte est envoyée sur téléphone via [ntfy](https://ntfy.sh), une application gratuite et sans compte. Une alerte part aussi quand l'accès redevient autorisé après une restriction, ou quand une préfecture révise sa prévision dans la soirée. Toucher l'alerte ouvre la page « été » du camp.
+## Alertes par e-mail
+Quand la prévision de demain d'un camp devient restrictive (**déconseillé** ou **interdit**), un e-mail est envoyé aux chefs. Aucune application à installer. Un e-mail part aussi quand l'accès redevient autorisé après une restriction, ou quand une préfecture révise sa prévision dans la soirée. Toutes les alertes d'une mise à jour sont regroupées dans un seul e-mail, avec un lien vers la page « été » de chaque camp concerné.
 
-Mise en place :
-1. Choisir un nom de sujet difficile à deviner, par exemple `ne-massifs-8f3k2q`. Toute personne qui le connaît peut lire les alertes.
-2. Installer l'application ntfy (Android ou iPhone) et s'abonner à ce sujet. Chaque chef peut s'y abonner.
-3. Dans le dépôt GitHub : *Settings → Secrets and variables → Actions → New repository secret*, nom `NTFY_TOPIC`, valeur : le nom du sujet.
+Mise en place, une seule fois (exemple avec Gmail) :
+1. Sur le compte Gmail qui enverra les alertes, activer la validation en deux étapes, puis créer un *mot de passe d'application* : https://myaccount.google.com/apppasswords
+2. Dans le dépôt GitHub : *Settings → Secrets and variables → Actions → New repository secret*, créer :
+   - `SMTP_HOST` : `smtp.gmail.com`
+   - `SMTP_USER` : l'adresse Gmail
+   - `SMTP_PASS` : le mot de passe d'application (16 lettres)
+   - `MAIL_TO` : les adresses des chefs, séparées par des virgules (elles sont mises en copie cachée)
+
+Tout autre fournisseur avec SMTP sécurisé (port 465) fonctionne aussi : Outlook (`smtp-mail.outlook.com`), OVH (`ssl0.ovh.net`), etc.
 
 Réglages facultatifs (*variables* GitHub ou variables d'environnement Docker) :
 - `ALERT_MIN_COLOR` : niveau à partir duquel alerter, `3` = déconseillé (défaut), `4` = interdit seulement.
-- `NTFY_SERVER` : serveur ntfy auto-hébergé, et `NTFY_TOKEN` (secret) si le sujet est protégé.
-- `SITE_URL` : adresse du site ouverte par l'alerte (défaut : GitHub Pages).
+- `SMTP_PORT` : port TLS (défaut `465`). `MAIL_FROM` : expéditeur affiché, par ex. `Alertes massifs <adresse@gmail.com>`.
+- `SITE_URL` : adresse du site dans les liens (défaut : GitHub Pages).
 
-Pour voir les alertes sans les envoyer : `NTFY_DRY_RUN=1 FORCE=1 node scripts/update-history.mjs`.
+Pour voir l'e-mail sans l'envoyer : `MAIL_DRY_RUN=1 FORCE=1 node scripts/update-history.mjs`.
 
 ## Consulter une date passée
 Ajouter `?date=AAAA-MM-JJ` à l'adresse, par exemple https://ctruillet.github.io/ne/?date=2026-07-14 (données de l'historique uniquement).
@@ -65,7 +70,7 @@ Deux services sont lancés :
 
 `historique.json` est stocké dans le volume `data`, partagé entre les deux services. Au premier lancement, il est initialisé avec le fichier du dépôt.
 
-Pour les alertes, définir `NTFY_TOPIC` (et éventuellement `SITE_URL`) dans un fichier `.env` à côté de `docker-compose.yml`.
+Pour les alertes, définir `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` et `MAIL_TO` (et éventuellement `SITE_URL`) dans un fichier `.env` à côté de `docker-compose.yml`.
 
 Si le site est hébergé avec Docker, désactiver le workflow GitHub Actions pour ne pas tenir deux historiques en parallèle.
 
