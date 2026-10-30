@@ -30,3 +30,17 @@ Modifier uniquement `camps.json` (le workflow et le site s'adaptent automatiquem
     { "cle": "cleDansHistorique", "label": "Nom affiché", "dept": "34", "id_massif": "344" }
   ]
 }
+## Docker
+Le site peut aussi être hébergé hors de GitHub Pages avec Docker :
+```bash
+docker compose up -d --build
+```
+Le site est alors disponible sur http://localhost:8080 (port modifiable avec `PORT=80 docker compose up -d`).
+
+Deux services sont lancés :
+- `web` : nginx qui sert le site.
+- `updater` : remplace le workflow GitHub Actions. Il lance `scripts/update-history.mjs` toutes les 15 minutes entre 14h et 18h UTC.
+
+`historique.json` est stocké dans le volume `data`, partagé entre les deux services. Au premier lancement, il est initialisé avec le fichier du dépôt. Les réglages se font par variables d'environnement du service `updater` : `UPDATE_INTERVAL_MINUTES` (défaut `15`) et `UPDATE_HOURS_UTC` (défaut `14-18`).
+
+Après une modification de `camps.json` ou `regles.json`, reconstruire avec `docker compose up -d --build`.

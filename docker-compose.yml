@@ -1,0 +1,21 @@
+services:
+  web:
+    build:
+      context: .
+      target: web
+    ports:
+      - "${PORT:-8080}:80"
+    volumes:
+      - data:/data:ro
+    restart: unless-stopped
+
+  updater:
+    build:
+      context: .
+      target: updater
+    volumes:
+      - data:/data
+    restart: unless-stopped
+
+volumes:
+  data:

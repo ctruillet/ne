@@ -4,8 +4,9 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const API_URL = 'https://www.risque-prevention-incendie.fr/static';
-const HISTORY_PATH = new URL('../historique.json', import.meta.url);
-const CAMPS_PATH = new URL('../camps.json', import.meta.url);
+// Chemins modifiables par variables d'environnement (utilisé par l'image Docker)
+const HISTORY_PATH = process.env.HISTORY_PATH ?? new URL('../historique.json', import.meta.url);
+const CAMPS_PATH = process.env.CAMPS_PATH ?? new URL('../camps.json', import.meta.url);
 
 function getParisDate(offset = 0) {
     const d = new Date();
