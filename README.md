@@ -8,6 +8,8 @@ Application web statique pour suivre les restrictions d'accès aux massifs fores
 - `index.html` : Structure de la page (contenu est injecté par JS).
 - `style.css` : Feuille de style.
 - `app.js` : Charge les fichiers JSON et applique les styles.
+- `camp.html` / `camp.js` : Page « été » d'un camp (calendrier du 1er juin au 30 septembre et nombre de jours par niveau), accessible par le lien « Voir tout l'été » de chaque camp.
+- `common.js` : Fonctions partagées entre les deux pages.
 - `camps.json` : Liste des camps et massifs à surveiller.
 - `regles.json` : Légende, couleurs et textes réglementaires par département (13, 34, 83).
 - `historique.json` : Base de données contenant les états des risques.
